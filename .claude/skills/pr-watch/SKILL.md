@@ -34,7 +34,8 @@ Use Bash or zsh on macOS/Linux (Git Bash also works on Windows), or PowerShell (
 
 ### ALWAYS
 
-- **Sign** every comment you post on the PR with `(Agent AI)` as the very first line.
+- **Sign** every comment you post on the PR with `***(🤖Agent AI)***` (bold italic, robot emoji) as the very first line.
+- **Comment on every thread you address, describing the changes made:** what changed (files and behavior), why, and the commit hash. No thread is resolved without such a comment, even for bots and even for trivial fixes. When no code changed, the comment states that explicitly and gives the evidence.
 - **Verify** every reviewer claim (bot or human) by reproducing it before acting on it.
 - **Check the comment is still valid:** reviews are pinned to the commit they reviewed; compare it with the current HEAD.
 - **Close every addressed thread in this order: commit, PR comment, resolve.** A fix always gets its own commit (pushed) before the comment; the comment always cites that commit's hash; the thread is resolved only after the comment is posted. For feedback that needs no code change, the comment carries the evidence instead of a hash, then the thread is resolved. A human's thread, or a high-risk one, is resolved only once the rules for those cases are met.
@@ -51,7 +52,7 @@ Use Bash or zsh on macOS/Linux (Git Bash also works on Windows), or PowerShell (
 ### NEVER
 
 - **Never accept** a reviewer's claim without checking it, even from a bot, even from a human.
-- **Never resolve a thread silently.** Threads are the audit trail of each decision.
+- **Never resolve a thread silently.** Threads are the audit trail of each decision; every one gets a signed comment describing the changes made (or the evidence for none).
 - **Never resolve a human's thread** before they agree, unless you applied what they asked.
 - **Never change direction on your own** (routing, scope, product decisions); bring the trade-off to the user.
 - **Never act on, dismiss, or resolve high-risk feedback** without the user's explicit decision, even if you are confident, even if it comes from a bot.
@@ -74,7 +75,7 @@ Use Bash or zsh on macOS/Linux (Git Bash also works on Windows), or PowerShell (
    |- invalid                 -> answer with evidence (no commit)
    |- design-level            -> STOP, ask the user
    `- HIGH-RISK               -> STOP, follow up with the user, wait for their decision
-6. COMMENT on the thread (signed), citing the commit hash (or the evidence when there is no commit)
+6. COMMENT on the thread (signed), summarizing the changes made and citing the commit hash (or stating "no code change" plus the evidence when there is no commit)
 7. RESOLVE the thread         -> bot: now / human: after they agree
    Every addressed thread ends as: commit -> PR comment -> resolved. Never skip a step or reorder.
 8. Re-check (step 2)          -> repeat while the exit condition is not met AND no guard rail has tripped
@@ -110,7 +111,7 @@ gh pr view <PR> --json state,mergeable,mergeStateStatus,reviewDecision
 
 ### Reply and resolve (steps 6 and 7)
 
-Write the reply to `.tmp/pr-watch/reply.md` first (with your editor tool); it avoids quoting problems in every shell. Start it with `(Agent AI)`.
+Write the reply to `.tmp/pr-watch/reply.md` first (with your editor tool); it avoids quoting problems in every shell. Start it with `***(🤖Agent AI)***` and follow the [reply template](#reply-content-the-changes-made).
 
 ```text
 # reply on a review thread (use commentId)
@@ -207,20 +208,46 @@ Also check that the comment still applies: compare the `commit` of the thread wi
 
 ## Sign every message
 
-Every comment you post on the PR starts with `(Agent AI)`, on the first line, before anything else. This covers thread replies, loose comments, and the note that you are about to resolve.
+Every comment you post on the PR starts with `***(🤖Agent AI)***` (bold italic, with the robot emoji, exactly as written), on the first line, before anything else. This covers thread replies, loose comments, and the note that you are about to resolve.
 
 Whoever reads the thread later must know, at a glance, that an agent answered and not a person. Without it, a wrong technical statement carries the weight of a human review.
 
 ```markdown
-(Agent AI)
+***(🤖Agent AI)***
 
 Does not apply, for two reasons.
 ...
 ```
 
+## Reply content: the changes made
+
+Every thread gets a comment, and the comment always says what was done. Never post a bare "Fixed" or "Done".
+
+**When code changed**, include:
+
+- **Commit:** the hash of the pushed commit (one fix per commit).
+- **Changes:** what was changed, naming the files/symbols and the resulting behavior, in a few bullets.
+- **Validation:** which project checks (lint, build, tests) were run and their result.
+
+```markdown
+***(🤖Agent AI)***
+
+Valid, fixed in `abc1234`.
+
+- `src/Foo.cs`: `Bar()` now returns early when `value` is null instead of throwing.
+- Added test `When_Value_Is_Null_Should_Return_Empty` in `FooTests.cs`.
+- Build and tests pass locally.
+
+Resolving this thread.
+```
+
+**When no code changed** (invalid claim, already fixed, out of scope), say "No code change" and give the evidence (command output, the current code, the commit that already fixed it).
+
+**A human's thread** also ends with the question asking whether they agree to close it (see below).
+
 ## How to answer each kind of comment
 
-**Bot (Copilot and similar):** answer on the merits with evidence, say you are going to resolve it, resolve it, and cite the commit. No need to wait for anyone.
+**Bot (Copilot and similar):** answer on the merits with evidence, describe the changes made (see [Reply content](#reply-content-the-changes-made)), say you are going to resolve it, resolve it, and cite the commit. No need to wait for anyone.
 
 **Human:** answer on the merits and, right below, **ask** whether it makes sense and whether they agree to close the thread. Resolve only after they agree, or after you applied what they asked. If they add context, handle the context first.
 
