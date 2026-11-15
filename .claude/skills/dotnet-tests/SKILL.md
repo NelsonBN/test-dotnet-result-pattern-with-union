@@ -3,7 +3,7 @@ name: dotnet-tests
 description: 'Write, run and gate tests for .NET code: unit tests (xunit, AwesomeAssertions, NSubstitute), narrow integration tests (Testcontainers, WebApplicationFactory, Assertions.Web) and mutation tests (Stryker.NET), all in one fixed Arrange-Act-Assert / Given_When_Then pattern, with a coverage gate (coverlet.MTP + ReportGenerator) and a Stop hook that sends the agent back to finish the tests when they fail or coverage is too low. Use when implementing or changing a feature, fixing a bug (regression test first), adding or reviewing tests, checking coverage, killing surviving mutants, or before declaring a change done. Command form: /dotnet-tests [unit|integration|coverage|mutation|quality|all].'
 argument-hint: '[unit|integration|coverage|mutation|quality|all]'
 license: MIT
-allowed-tools: Bash
+allowed-tools: Bash(dotnet:*), Bash(reportgenerator:*), Bash(docker:*), Bash(git:*), PowerShell(dotnet:*), PowerShell(reportgenerator:*), PowerShell(docker:*), PowerShell(git:*), Read, Edit, Write, Grep, Glob
 ---
 
 # .NET Tests
