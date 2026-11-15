@@ -21,6 +21,17 @@
     <PackageReference Include="coverlet.MTP" Version="*" PrivateAssets="all" />
   </ItemGroup>
 
+  <!-- Implicit global usings, only for the libraries this project actually references (must stay below the PackageReference items) -->
+  <ItemGroup Condition="@(PackageReference->AnyHaveMetadataValue('Identity', 'xunit.v3'))">
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup Condition="@(PackageReference->AnyHaveMetadataValue('Identity', 'AwesomeAssertions'))">
+    <Using Include="AwesomeAssertions" />
+  </ItemGroup>
+  <ItemGroup Condition="@(PackageReference->AnyHaveMetadataValue('Identity', 'NSubstitute'))">
+    <Using Include="NSubstitute" />
+  </ItemGroup>
+
   <!-- Integration tests only (separate project or the same one) -->
   <ItemGroup Condition="'$(IncludeIntegration)' == 'true'">
     <PackageReference Include="Testcontainers" Version="*" />

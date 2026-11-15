@@ -83,6 +83,8 @@ The hook blocks until each gap is filled with a real test, not an empty file: th
 2. Create the test file at the mirror path with the first Given_When_Then test (see [test-pattern.md](test-pattern.md)).
 3. Add the remaining behaviours until the coverage gate passes.
 
+Test files do not write `using Xunit;`, `using AwesomeAssertions;` or `using NSubstitute;`: the csproj declares them as implicit `<Using Include="..." />` items, each in an `ItemGroup` conditioned on its `PackageReference` (`@(PackageReference->AnyHaveMetadataValue('Identity', '...'))`), so a project only gets the usings of the libraries it references. Keep those groups below the `PackageReference` items, because MSBuild evaluates items in order.
+
 ## Existing repositories
 
 The hook only checks files you change, so legacy code is not flagged until it is touched. When you edit a legacy file, add its mirror test file in the same change. Do not bulk-generate empty test files.
