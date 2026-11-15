@@ -8,13 +8,13 @@ namespace Result.Benchmarks.Tests;
 [RankColumn]
 public class CheckingHasValueVoidResultBenchmarks
 {
-    private ResultRecordStruct.VoidResult _recordStruct;
-    private ResultStruct.VoidResult _struct;
-    private ResultReadonlyStruct.VoidResult _readonlyStruct;
-    private ResultClass.VoidResult _class = null!;
-    private ResultRecordClass.VoidResult _recordClass = null!;
-    private ResultUnion.VoidResult _union;
-    private ResultUnionCustom.VoidResult _unionCustom;
+    private ResultRecordStruct.Result _recordStruct;
+    private ResultStruct.Result _struct;
+    private ResultReadonlyStruct.Result _readonlyStruct;
+    private ResultClass.Result _class = null!;
+    private ResultRecordClass.Result _recordClass = null!;
+    private ResultUnion.Result _union;
+    private ResultUnionCustom.Result _unionCustom;
 
     [Params(true, false)]
     public bool Success { get; set; }
@@ -30,13 +30,13 @@ public class CheckingHasValueVoidResultBenchmarks
         ResultUnion.Error errorUnion = new("fake");
         ResultUnionCustom.Error errorUnionCustom = new("fake");
 
-        _recordStruct = Success ? new() : ResultRecordStruct.VoidResult.From(errorRecordStruct);
-        _struct = Success ? new() : ResultStruct.VoidResult.From(errorStruct);
-        _readonlyStruct = Success ? new() : ResultReadonlyStruct.VoidResult.From(errorReadonlyStruct);
-        _class = Success ? new() : ResultClass.VoidResult.From(errorClass);
-        _recordClass = Success ? new() : ResultRecordClass.VoidResult.From(errorRecordClass);
-        _union = Success ? new ResultUnion.VoidResult() : ResultUnion.VoidResult.From(errorUnion);
-        _unionCustom = Success ? new ResultUnionCustom.VoidResult() : ResultUnionCustom.VoidResult.From(errorUnionCustom);
+        _recordStruct = Success ? new() : ResultRecordStruct.Result.From(errorRecordStruct);
+        _struct = Success ? new() : ResultStruct.Result.From(errorStruct);
+        _readonlyStruct = Success ? new() : ResultReadonlyStruct.Result.From(errorReadonlyStruct);
+        _class = Success ? new() : ResultClass.Result.From(errorClass);
+        _recordClass = Success ? new() : ResultRecordClass.Result.From(errorRecordClass);
+        _union = Success ? new ResultUnion.Result() : ResultUnion.Result.From(errorUnion);
+        _unionCustom = Success ? new ResultUnionCustom.Result() : ResultUnionCustom.Result.From(errorUnionCustom);
     }
 
     [Benchmark]

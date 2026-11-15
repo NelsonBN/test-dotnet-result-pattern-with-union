@@ -33,49 +33,49 @@ public class ImplicitFromSpanVoidResultBenchmarks
     }
 
     [Benchmark]
-    public ResultRecordStruct.VoidResult RecordStruct_CreateErrors()
+    public ResultRecordStruct.Result RecordStruct_CreateErrors()
     {
         ReadOnlySpan<ResultRecordStruct.Error> errors = _errorsRecordStruct;
         return errors;
     }
 
     [Benchmark]
-    public ResultStruct.VoidResult Struct_CreateErrors()
+    public ResultStruct.Result Struct_CreateErrors()
     {
         ReadOnlySpan<ResultStruct.Error> errors = _errorsStruct;
         return errors;
     }
 
     [Benchmark]
-    public ResultReadonlyStruct.VoidResult ReadonlyStruct_CreateErrors()
+    public ResultReadonlyStruct.Result ReadonlyStruct_CreateErrors()
     {
         ReadOnlySpan<ResultReadonlyStruct.Error> errors = _errorsReadonlyStruct;
         return errors;
     }
 
     [Benchmark]
-    public ResultClass.VoidResult Class_CreateErrors()
+    public ResultClass.Result Class_CreateErrors()
     {
         ReadOnlySpan<ResultClass.Error> errors = _errorsClass;
         return errors;
     }
 
     [Benchmark]
-    public ResultRecordClass.VoidResult RecordClass_CreateErrors()
+    public ResultRecordClass.Result RecordClass_CreateErrors()
     {
         ReadOnlySpan<ResultRecordClass.Error> errors = _errorsRecordClass;
         return errors;
     }
 
     [Benchmark]
-    public ResultUnion.VoidResult Union_CreateErrors()
+    public ResultUnion.Result Union_CreateErrors()
     {
         ReadOnlySpan<ResultUnion.Error> errors = _errorsUnion;
         return errors;
     }
 
     [Benchmark(Baseline = true)]
-    public ResultUnionCustom.VoidResult UnionCustom_CreateErrors()
+    public ResultUnionCustom.Result UnionCustom_CreateErrors()
     {
         ReadOnlySpan<ResultUnionCustom.Error> errors = _errorsUnionCustom;
         return errors;

@@ -29,23 +29,23 @@ public class ImplicitFromErrorVoidResultBenchmarks
     }
 
     [Benchmark]
-    public ResultRecordStruct.VoidResult RecordStruct_CreateErrors() => _errorRecordStruct;
+    public ResultRecordStruct.Result RecordStruct_CreateErrors() => _errorRecordStruct;
 
     [Benchmark]
-    public ResultStruct.VoidResult Struct_CreateErrors() => _errorStruct;
+    public ResultStruct.Result Struct_CreateErrors() => _errorStruct;
 
     [Benchmark]
-    public ResultReadonlyStruct.VoidResult ReadonlyStruct_CreateErrors() => _errorReadonlyStruct;
+    public ResultReadonlyStruct.Result ReadonlyStruct_CreateErrors() => _errorReadonlyStruct;
 
     [Benchmark]
-    public ResultClass.VoidResult Class_CreateErrors() => _errorClass;
+    public ResultClass.Result Class_CreateErrors() => _errorClass;
 
     [Benchmark]
-    public ResultRecordClass.VoidResult RecordClass_CreateErrors() => _errorRecordClass;
+    public ResultRecordClass.Result RecordClass_CreateErrors() => _errorRecordClass;
 
     [Benchmark]
-    public ResultUnion.VoidResult Union_CreateErrors() => _errorUnion;
+    public ResultUnion.Result Union_CreateErrors() => _errorUnion;
 
     [Benchmark(Baseline = true)]
-    public ResultUnionCustom.VoidResult UnionCustom_CreateErrors() => _errorUnionCustom;
+    public ResultUnionCustom.Result UnionCustom_CreateErrors() => _errorUnionCustom;
 }

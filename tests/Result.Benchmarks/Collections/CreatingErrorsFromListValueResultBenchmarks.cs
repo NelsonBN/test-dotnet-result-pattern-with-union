@@ -34,23 +34,23 @@ public class CreatingErrorsFromListValueResultBenchmarks
     }
 
     [Benchmark]
-    public ResultRecordStruct.ValueResult<FakeModel> RecordStruct_CreateErrors() => ResultRecordStruct.ValueResult<FakeModel>.From(_errorsRecordStruct);
+    public ResultRecordStruct.Result<FakeModel> RecordStruct_CreateErrors() => ResultRecordStruct.Result<FakeModel>.From(_errorsRecordStruct);
 
     [Benchmark]
-    public ResultStruct.ValueResult<FakeModel> Struct_CreateErrors() => ResultStruct.ValueResult<FakeModel>.From(_errorsStruct);
+    public ResultStruct.Result<FakeModel> Struct_CreateErrors() => ResultStruct.Result<FakeModel>.From(_errorsStruct);
 
     [Benchmark]
-    public ResultReadonlyStruct.ValueResult<FakeModel> ReadonlyStruct_CreateErrors() => ResultReadonlyStruct.ValueResult<FakeModel>.From(_errorsReadonlyStruct);
+    public ResultReadonlyStruct.Result<FakeModel> ReadonlyStruct_CreateErrors() => ResultReadonlyStruct.Result<FakeModel>.From(_errorsReadonlyStruct);
 
     [Benchmark]
-    public ResultClass.ValueResult<FakeModel> Class_CreateErrors() => ResultClass.ValueResult<FakeModel>.From(_errorsClass);
+    public ResultClass.Result<FakeModel> Class_CreateErrors() => ResultClass.Result<FakeModel>.From(_errorsClass);
 
     [Benchmark]
-    public ResultRecordClass.ValueResult<FakeModel> RecordClass_CreateErrors() => ResultRecordClass.ValueResult<FakeModel>.From(_errorsRecordClass);
+    public ResultRecordClass.Result<FakeModel> RecordClass_CreateErrors() => ResultRecordClass.Result<FakeModel>.From(_errorsRecordClass);
 
     [Benchmark]
-    public ResultUnion.ValueResult<FakeModel> Union_CreateErrors() => ResultUnion.ValueResult<FakeModel>.From(_errorsUnion);
+    public ResultUnion.Result<FakeModel> Union_CreateErrors() => ResultUnion.Result<FakeModel>.From(_errorsUnion);
 
     [Benchmark(Baseline = true)]
-    public ResultUnionCustom.ValueResult<FakeModel> UnionCustom_CreateErrors() => ResultUnionCustom.ValueResult<FakeModel>.From(_errorsUnionCustom);
+    public ResultUnionCustom.Result<FakeModel> UnionCustom_CreateErrors() => ResultUnionCustom.Result<FakeModel>.From(_errorsUnionCustom);
 }

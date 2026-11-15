@@ -12,13 +12,13 @@ namespace Result.Benchmarks.Tests;
 [RankColumn]
 public class GettingErrorsValueResultBenchmarks
 {
-    private ResultRecordStruct.ValueResult<FakeModel> _recordStruct;
-    private ResultStruct.ValueResult<FakeModel> _struct;
-    private ResultReadonlyStruct.ValueResult<FakeModel> _readonlyStruct;
-    private ResultClass.ValueResult<FakeModel> _class = null!;
-    private ResultRecordClass.ValueResult<FakeModel> _recordClass = null!;
-    private ResultUnion.ValueResult<FakeModel> _union;
-    private ResultUnionCustom.ValueResult<FakeModel> _unionCustom;
+    private ResultRecordStruct.Result<FakeModel> _recordStruct;
+    private ResultStruct.Result<FakeModel> _struct;
+    private ResultReadonlyStruct.Result<FakeModel> _readonlyStruct;
+    private ResultClass.Result<FakeModel> _class = null!;
+    private ResultRecordClass.Result<FakeModel> _recordClass = null!;
+    private ResultUnion.Result<FakeModel> _union;
+    private ResultUnionCustom.Result<FakeModel> _unionCustom;
 
     [Params(1, 5)]
     public int ErrorsCount { get; set; }
@@ -34,13 +34,13 @@ public class GettingErrorsValueResultBenchmarks
         ResultUnion.Error[] errorsUnion = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnion.Error($"fake{index}"))];
         ResultUnionCustom.Error[] errorsUnionCustom = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustom.Error($"fake{index}"))];
 
-        _recordStruct = ErrorsCount == 1 ? ResultRecordStruct.ValueResult<FakeModel>.From(errorsRecordStruct[0]) : ResultRecordStruct.ValueResult<FakeModel>.From(errorsRecordStruct);
-        _struct = ErrorsCount == 1 ? ResultStruct.ValueResult<FakeModel>.From(errorsStruct[0]) : ResultStruct.ValueResult<FakeModel>.From(errorsStruct);
-        _readonlyStruct = ErrorsCount == 1 ? ResultReadonlyStruct.ValueResult<FakeModel>.From(errorsReadonlyStruct[0]) : ResultReadonlyStruct.ValueResult<FakeModel>.From(errorsReadonlyStruct);
-        _class = ErrorsCount == 1 ? ResultClass.ValueResult<FakeModel>.From(errorsClass[0]) : ResultClass.ValueResult<FakeModel>.From(errorsClass);
-        _recordClass = ErrorsCount == 1 ? ResultRecordClass.ValueResult<FakeModel>.From(errorsRecordClass[0]) : ResultRecordClass.ValueResult<FakeModel>.From(errorsRecordClass);
-        _union = ResultUnion.ValueResult<FakeModel>.From(errorsUnion);
-        _unionCustom = ResultUnionCustom.ValueResult<FakeModel>.From(errorsUnionCustom);
+        _recordStruct = ErrorsCount == 1 ? ResultRecordStruct.Result<FakeModel>.From(errorsRecordStruct[0]) : ResultRecordStruct.Result<FakeModel>.From(errorsRecordStruct);
+        _struct = ErrorsCount == 1 ? ResultStruct.Result<FakeModel>.From(errorsStruct[0]) : ResultStruct.Result<FakeModel>.From(errorsStruct);
+        _readonlyStruct = ErrorsCount == 1 ? ResultReadonlyStruct.Result<FakeModel>.From(errorsReadonlyStruct[0]) : ResultReadonlyStruct.Result<FakeModel>.From(errorsReadonlyStruct);
+        _class = ErrorsCount == 1 ? ResultClass.Result<FakeModel>.From(errorsClass[0]) : ResultClass.Result<FakeModel>.From(errorsClass);
+        _recordClass = ErrorsCount == 1 ? ResultRecordClass.Result<FakeModel>.From(errorsRecordClass[0]) : ResultRecordClass.Result<FakeModel>.From(errorsRecordClass);
+        _union = ResultUnion.Result<FakeModel>.From(errorsUnion);
+        _unionCustom = ResultUnionCustom.Result<FakeModel>.From(errorsUnionCustom);
     }
 
     [Benchmark]

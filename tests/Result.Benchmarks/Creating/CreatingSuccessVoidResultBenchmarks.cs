@@ -1,4 +1,4 @@
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 
 namespace Result.Benchmarks.Tests;
@@ -9,23 +9,23 @@ namespace Result.Benchmarks.Tests;
 public class CreatingSuccessVoidResultBenchmarks
 {
     [Benchmark]
-    public ResultRecordStruct.VoidResult RecordStruct_CreateSuccess() => new();
+    public ResultRecordStruct.Result RecordStruct_CreateSuccess() => new();
 
     [Benchmark]
-    public ResultStruct.VoidResult Struct_CreateSuccess() => new();
+    public ResultStruct.Result Struct_CreateSuccess() => new();
 
     [Benchmark]
-    public ResultReadonlyStruct.VoidResult ReadonlyStruct_CreateSuccess() => new();
+    public ResultReadonlyStruct.Result ReadonlyStruct_CreateSuccess() => new();
 
     [Benchmark]
-    public ResultClass.VoidResult Class_CreateSuccess() => new();
+    public ResultClass.Result Class_CreateSuccess() => new();
 
     [Benchmark]
-    public ResultRecordClass.VoidResult RecordClass_CreateSuccess() => new();
+    public ResultRecordClass.Result RecordClass_CreateSuccess() => new();
 
     [Benchmark]
-    public ResultUnion.VoidResult Union_CreateSuccess() => new();
+    public ResultUnion.Result Union_CreateSuccess() => new();
 
     [Benchmark(Baseline = true)]
-    public ResultUnionCustom.VoidResult UnionCustom_CreateSuccess() => new();
+    public ResultUnionCustom.Result UnionCustom_CreateSuccess() => new();
 }

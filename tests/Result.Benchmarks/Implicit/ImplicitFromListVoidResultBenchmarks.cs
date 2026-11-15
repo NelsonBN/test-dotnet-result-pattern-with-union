@@ -33,23 +33,23 @@ public class ImplicitFromListVoidResultBenchmarks
     }
 
     [Benchmark]
-    public ResultRecordStruct.VoidResult RecordStruct_CreateErrors() => _errorsRecordStruct;
+    public ResultRecordStruct.Result RecordStruct_CreateErrors() => _errorsRecordStruct;
 
     [Benchmark]
-    public ResultStruct.VoidResult Struct_CreateErrors() => _errorsStruct;
+    public ResultStruct.Result Struct_CreateErrors() => _errorsStruct;
 
     [Benchmark]
-    public ResultReadonlyStruct.VoidResult ReadonlyStruct_CreateErrors() => _errorsReadonlyStruct;
+    public ResultReadonlyStruct.Result ReadonlyStruct_CreateErrors() => _errorsReadonlyStruct;
 
     [Benchmark]
-    public ResultClass.VoidResult Class_CreateErrors() => _errorsClass;
+    public ResultClass.Result Class_CreateErrors() => _errorsClass;
 
     [Benchmark]
-    public ResultRecordClass.VoidResult RecordClass_CreateErrors() => _errorsRecordClass;
+    public ResultRecordClass.Result RecordClass_CreateErrors() => _errorsRecordClass;
 
     [Benchmark]
-    public ResultUnion.VoidResult Union_CreateErrors() => _errorsUnion;
+    public ResultUnion.Result Union_CreateErrors() => _errorsUnion;
 
     [Benchmark(Baseline = true)]
-    public ResultUnionCustom.VoidResult UnionCustom_CreateErrors() => _errorsUnionCustom;
+    public ResultUnionCustom.Result UnionCustom_CreateErrors() => _errorsUnionCustom;
 }

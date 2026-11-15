@@ -33,23 +33,23 @@ public class ImplicitFromArrayValueResultBenchmarks
     }
 
     [Benchmark]
-    public ResultRecordStruct.ValueResult<FakeModel> RecordStruct_CreateErrors() => _errorsRecordStruct;
+    public ResultRecordStruct.Result<FakeModel> RecordStruct_CreateErrors() => _errorsRecordStruct;
 
     [Benchmark]
-    public ResultStruct.ValueResult<FakeModel> Struct_CreateErrors() => _errorsStruct;
+    public ResultStruct.Result<FakeModel> Struct_CreateErrors() => _errorsStruct;
 
     [Benchmark]
-    public ResultReadonlyStruct.ValueResult<FakeModel> ReadonlyStruct_CreateErrors() => _errorsReadonlyStruct;
+    public ResultReadonlyStruct.Result<FakeModel> ReadonlyStruct_CreateErrors() => _errorsReadonlyStruct;
 
     [Benchmark]
-    public ResultClass.ValueResult<FakeModel> Class_CreateErrors() => _errorsClass;
+    public ResultClass.Result<FakeModel> Class_CreateErrors() => _errorsClass;
 
     [Benchmark]
-    public ResultRecordClass.ValueResult<FakeModel> RecordClass_CreateErrors() => _errorsRecordClass;
+    public ResultRecordClass.Result<FakeModel> RecordClass_CreateErrors() => _errorsRecordClass;
 
     [Benchmark]
-    public ResultUnion.ValueResult<FakeModel> Union_CreateErrors() => _errorsUnion;
+    public ResultUnion.Result<FakeModel> Union_CreateErrors() => _errorsUnion;
 
     [Benchmark(Baseline = true)]
-    public ResultUnionCustom.ValueResult<FakeModel> UnionCustom_CreateErrors() => _errorsUnionCustom;
+    public ResultUnionCustom.Result<FakeModel> UnionCustom_CreateErrors() => _errorsUnionCustom;
 }

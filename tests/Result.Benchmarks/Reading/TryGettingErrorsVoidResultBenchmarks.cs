@@ -11,13 +11,13 @@ namespace Result.Benchmarks.Tests;
 [RankColumn]
 public class TryGettingErrorsVoidResultBenchmarks
 {
-    private ResultRecordStruct.VoidResult _recordStruct;
-    private ResultStruct.VoidResult _struct;
-    private ResultReadonlyStruct.VoidResult _readonlyStruct;
-    private ResultClass.VoidResult _class = null!;
-    private ResultRecordClass.VoidResult _recordClass = null!;
-    private ResultUnion.VoidResult _union;
-    private ResultUnionCustom.VoidResult _unionCustom;
+    private ResultRecordStruct.Result _recordStruct;
+    private ResultStruct.Result _struct;
+    private ResultReadonlyStruct.Result _readonlyStruct;
+    private ResultClass.Result _class = null!;
+    private ResultRecordClass.Result _recordClass = null!;
+    private ResultUnion.Result _union;
+    private ResultUnionCustom.Result _unionCustom;
 
     [Params(1, 5)]
     public int ErrorsCount { get; set; }
@@ -33,13 +33,13 @@ public class TryGettingErrorsVoidResultBenchmarks
         ResultUnion.Error[] errorsUnion = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnion.Error($"fake{index}"))];
         ResultUnionCustom.Error[] errorsUnionCustom = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustom.Error($"fake{index}"))];
 
-        _recordStruct = ErrorsCount == 1 ? ResultRecordStruct.VoidResult.From(errorsRecordStruct[0]) : ResultRecordStruct.VoidResult.From(errorsRecordStruct);
-        _struct = ErrorsCount == 1 ? ResultStruct.VoidResult.From(errorsStruct[0]) : ResultStruct.VoidResult.From(errorsStruct);
-        _readonlyStruct = ErrorsCount == 1 ? ResultReadonlyStruct.VoidResult.From(errorsReadonlyStruct[0]) : ResultReadonlyStruct.VoidResult.From(errorsReadonlyStruct);
-        _class = ErrorsCount == 1 ? ResultClass.VoidResult.From(errorsClass[0]) : ResultClass.VoidResult.From(errorsClass);
-        _recordClass = ErrorsCount == 1 ? ResultRecordClass.VoidResult.From(errorsRecordClass[0]) : ResultRecordClass.VoidResult.From(errorsRecordClass);
-        _union = ResultUnion.VoidResult.From(errorsUnion);
-        _unionCustom = ResultUnionCustom.VoidResult.From(errorsUnionCustom);
+        _recordStruct = ErrorsCount == 1 ? ResultRecordStruct.Result.From(errorsRecordStruct[0]) : ResultRecordStruct.Result.From(errorsRecordStruct);
+        _struct = ErrorsCount == 1 ? ResultStruct.Result.From(errorsStruct[0]) : ResultStruct.Result.From(errorsStruct);
+        _readonlyStruct = ErrorsCount == 1 ? ResultReadonlyStruct.Result.From(errorsReadonlyStruct[0]) : ResultReadonlyStruct.Result.From(errorsReadonlyStruct);
+        _class = ErrorsCount == 1 ? ResultClass.Result.From(errorsClass[0]) : ResultClass.Result.From(errorsClass);
+        _recordClass = ErrorsCount == 1 ? ResultRecordClass.Result.From(errorsRecordClass[0]) : ResultRecordClass.Result.From(errorsRecordClass);
+        _union = ResultUnion.Result.From(errorsUnion);
+        _unionCustom = ResultUnionCustom.Result.From(errorsUnionCustom);
     }
 
     [Benchmark]

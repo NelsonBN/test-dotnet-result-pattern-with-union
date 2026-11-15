@@ -22,9 +22,9 @@ An experiment, not a library: compares the **Result pattern** built the classic 
 
 ## Result Variants
 
-Each variant is a project `src/Result<Variant>/Result<Variant>.csproj` with file-scoped namespace `Result<Variant>` and the **same type names in every project**, both files in the project root: `ValueResult.cs` (`ValueResult<TValue>`) and `VoidResult.cs` (`VoidResult`), plus the project's own `Error.cs` and `ErrorCollection.cs`. Benchmarks refer to them by namespace (`ResultStruct.ValueResult<FakeModel>`, `ResultStruct.Error`).
+Each variant is a project `src/Result<Variant>/Result<Variant>.csproj` with file-scoped namespace `Result<Variant>` and the **same type names in every project**, both in one file in the project root, `Result.cs` (`Result<TValue>` for value, `Result` for void), plus the project's own `Error.cs` and `ErrorCollection.cs`. Benchmarks refer to them by namespace (`ResultStruct.Result<FakeModel>`, `ResultStruct.Error`).
 
-Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultClass` (sealed), `ResultRecordClass` (sealed), and `ResultUnion` (`union ValueResult<T>(T, ImmutableArray<Error>)` / `union VoidResult(ImmutableArray<Error>)`). A second union, `ResultUnionCustom` (hand-written `[Union]` readonly struct with `HasValue`/`TryGetValue`, benchmarked as `UnionCustom_*`), measures the cost of boxing and is the only baseline (`UnionCustom_*`).
+Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultClass` (sealed), `ResultRecordClass` (sealed), and `ResultUnion` (`union Result<T>(T, ImmutableArray<Error>)` / `union Result(ImmutableArray<Error>)`). A second union, `ResultUnionCustom` (hand-written `[Union]` readonly struct with `HasValue`/`TryGetValue`, benchmarked as `UnionCustom_*`), measures the cost of boxing and is the only baseline (`UnionCustom_*`).
 
 - Out of scope, do not add: closed hierarchies, tuples, exceptions.
 - Every project has its own identical copy of `Error.cs` (namespace aside); the types are distinct, so benchmarks build one `Error` input per variant with identical values. A change to `Error` or `ErrorCollection` goes to all seven copies.
@@ -36,15 +36,15 @@ Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultC
 ### Intentional deviations (the only allowed ones)
 
 - **`ResultUnionCustom`**: hand-written union with fields; same case types, `GetValue()` and `From(...)` as the `ResultUnion` project, but nothing is boxed.
-- **`ResultUnion`**: has no `HasValue`/`TryGetValue`. A declared union lowers patterns (`is T`, `is null`) onto those members when present, so declaring them makes `IsSuccess`/`GetValue()` recurse infinitely (stack overflow); use `is T value` / `is ImmutableArray<Error> errors` instead (the benchmarks do). On default, `ResultUnionCustom.ValueResult<T>` reports no value (`HasValue` false, both `TryGetValue` false), whereas the struct value results treat default as a failure with empty errors.
-- **Union**: exposes `GetValue()` instead of `Value`; created via implicit conversions and `From(...)` instead of constructors; boxes its `ImmutableArray<Error>` case (a 24 B box on every error creation). In the void union, success is `default`, so `default(ResultUnion.VoidResult).IsSuccess` is `true` (the void structs' `default` is a failure).
+- **`ResultUnion`**: has no `HasValue`/`TryGetValue`. A declared union lowers patterns (`is T`, `is null`) onto those members when present, so declaring them makes `IsSuccess`/`GetValue()` recurse infinitely (stack overflow); use `is T value` / `is ImmutableArray<Error> errors` instead (the benchmarks do). On default, `ResultUnionCustom.Result<T>` reports no value (`HasValue` false, both `TryGetValue` false), whereas the struct value results treat default as a failure with empty errors.
+- **Union**: exposes `GetValue()` instead of `Value`; created via implicit conversions and `From(...)` instead of constructors; boxes its `ImmutableArray<Error>` case (a 24 B box on every error creation). In the void union, success is `default`, so `default(ResultUnion.Result).IsSuccess` is `true` (the void structs' `default` is a failure).
 - **`readonly struct`**: `IsSuccess` is a `readonly` field (no private setter allowed).
 - **Record struct / record class**: compiler-generated equality, `ToString` and deconstruction are the variation under test. The synthesized `ToString` reads both `Value` and `Errors`, so it throws for every value result and for a successful void record, by design (accessor guards are not weakened).
 
 ### Union pitfalls
 
 - A union lowers to a struct with one `object? Value` field; value-type cases are boxed.
-- **Value payload limitation** (`ResultUnion.ValueResult<T>`): `T` must not overlap `ImmutableArray<Error>` (e.g. `object`), because the union cannot tell which case was intended; a `T` of `object` can report `IsSuccess` for an error. A `null` success payload is also read as a failure and `GetValue()` throws, whereas the non-union value results accept it. Value-result comparisons therefore apply to non-null, non-overlapping payloads.
+- **Value payload limitation** (`ResultUnion.Result<T>`): `T` must not overlap `ImmutableArray<Error>` (e.g. `object`), because the union cannot tell which case was intended; a `T` of `object` can report `IsSuccess` for an error. A `null` success payload is also read as a failure and `GetValue()` throws, whereas the non-union value results accept it. Value-result comparisons therefore apply to non-null, non-overlapping payloads.
 - Always add a `null => ...` arm to `switch` expressions (`default` has null contents).
 - Helpers (`IsSuccess`, `Match`, ...) are hand-written; the union adds no equality or deconstruction.
 - Runtime types (`UnionAttribute`, `IUnion`) ship with .NET 11, hence net11 only.

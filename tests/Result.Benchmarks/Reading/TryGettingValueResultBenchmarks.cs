@@ -1,4 +1,4 @@
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using Result.Benchmarks.Fakes;
 
@@ -10,13 +10,13 @@ namespace Result.Benchmarks.Tests;
 [RankColumn]
 public class TryGettingValueResultBenchmarks
 {
-    private ResultRecordStruct.ValueResult<FakeModel> _recordStruct;
-    private ResultStruct.ValueResult<FakeModel> _struct;
-    private ResultReadonlyStruct.ValueResult<FakeModel> _readonlyStruct;
-    private ResultClass.ValueResult<FakeModel> _class = null!;
-    private ResultRecordClass.ValueResult<FakeModel> _recordClass = null!;
-    private ResultUnion.ValueResult<FakeModel> _union;
-    private ResultUnionCustom.ValueResult<FakeModel> _unionCustom;
+    private ResultRecordStruct.Result<FakeModel> _recordStruct;
+    private ResultStruct.Result<FakeModel> _struct;
+    private ResultReadonlyStruct.Result<FakeModel> _readonlyStruct;
+    private ResultClass.Result<FakeModel> _class = null!;
+    private ResultRecordClass.Result<FakeModel> _recordClass = null!;
+    private ResultUnion.Result<FakeModel> _union;
+    private ResultUnionCustom.Result<FakeModel> _unionCustom;
 
     [GlobalSetup]
     public void Setup()

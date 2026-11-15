@@ -9,13 +9,13 @@ namespace Result.Benchmarks.Tests;
 [RankColumn]
 public class CheckingIsSuccessValueResultBenchmarks
 {
-    private ResultRecordStruct.ValueResult<FakeModel> _recordStruct;
-    private ResultStruct.ValueResult<FakeModel> _struct;
-    private ResultReadonlyStruct.ValueResult<FakeModel> _readonlyStruct;
-    private ResultClass.ValueResult<FakeModel> _class = null!;
-    private ResultRecordClass.ValueResult<FakeModel> _recordClass = null!;
-    private ResultUnion.ValueResult<FakeModel> _union;
-    private ResultUnionCustom.ValueResult<FakeModel> _unionCustom;
+    private ResultRecordStruct.Result<FakeModel> _recordStruct;
+    private ResultStruct.Result<FakeModel> _struct;
+    private ResultReadonlyStruct.Result<FakeModel> _readonlyStruct;
+    private ResultClass.Result<FakeModel> _class = null!;
+    private ResultRecordClass.Result<FakeModel> _recordClass = null!;
+    private ResultUnion.Result<FakeModel> _union;
+    private ResultUnionCustom.Result<FakeModel> _unionCustom;
 
     [Params(true, false)]
     public bool Success { get; set; }
@@ -32,13 +32,13 @@ public class CheckingIsSuccessValueResultBenchmarks
         ResultUnion.Error errorUnion = new("fake");
         ResultUnionCustom.Error errorUnionCustom = new("fake");
 
-        _recordStruct = Success ? new(model) : ResultRecordStruct.ValueResult<FakeModel>.From(errorRecordStruct);
-        _struct = Success ? new(model) : ResultStruct.ValueResult<FakeModel>.From(errorStruct);
-        _readonlyStruct = Success ? new(model) : ResultReadonlyStruct.ValueResult<FakeModel>.From(errorReadonlyStruct);
-        _class = Success ? new(model) : ResultClass.ValueResult<FakeModel>.From(errorClass);
-        _recordClass = Success ? new(model) : ResultRecordClass.ValueResult<FakeModel>.From(errorRecordClass);
-        _union = Success ? model : ResultUnion.ValueResult<FakeModel>.From(errorUnion);
-        _unionCustom = Success ? model : ResultUnionCustom.ValueResult<FakeModel>.From(errorUnionCustom);
+        _recordStruct = Success ? new(model) : ResultRecordStruct.Result<FakeModel>.From(errorRecordStruct);
+        _struct = Success ? new(model) : ResultStruct.Result<FakeModel>.From(errorStruct);
+        _readonlyStruct = Success ? new(model) : ResultReadonlyStruct.Result<FakeModel>.From(errorReadonlyStruct);
+        _class = Success ? new(model) : ResultClass.Result<FakeModel>.From(errorClass);
+        _recordClass = Success ? new(model) : ResultRecordClass.Result<FakeModel>.From(errorRecordClass);
+        _union = Success ? model : ResultUnion.Result<FakeModel>.From(errorUnion);
+        _unionCustom = Success ? model : ResultUnionCustom.Result<FakeModel>.From(errorUnionCustom);
     }
 
     [Benchmark]

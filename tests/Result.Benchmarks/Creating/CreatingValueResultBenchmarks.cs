@@ -1,4 +1,4 @@
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using Result.Benchmarks.Fakes;
 
@@ -15,23 +15,23 @@ public class CreatingValueResultBenchmarks
     public void Setup() => _model = new();
 
     [Benchmark]
-    public ResultRecordStruct.ValueResult<FakeModel> RecordStruct_CreateSuccess() => new(_model);
+    public ResultRecordStruct.Result<FakeModel> RecordStruct_CreateSuccess() => new(_model);
 
     [Benchmark]
-    public ResultStruct.ValueResult<FakeModel> Struct_CreateSuccess() => new(_model);
+    public ResultStruct.Result<FakeModel> Struct_CreateSuccess() => new(_model);
 
     [Benchmark]
-    public ResultReadonlyStruct.ValueResult<FakeModel> ReadonlyStruct_CreateSuccess() => new(_model);
+    public ResultReadonlyStruct.Result<FakeModel> ReadonlyStruct_CreateSuccess() => new(_model);
 
     [Benchmark]
-    public ResultClass.ValueResult<FakeModel> Class_CreateSuccess() => new(_model);
+    public ResultClass.Result<FakeModel> Class_CreateSuccess() => new(_model);
 
     [Benchmark]
-    public ResultRecordClass.ValueResult<FakeModel> RecordClass_CreateSuccess() => new(_model);
+    public ResultRecordClass.Result<FakeModel> RecordClass_CreateSuccess() => new(_model);
 
     [Benchmark]
-    public ResultUnion.ValueResult<FakeModel> Union_CreateSuccess() => _model;
+    public ResultUnion.Result<FakeModel> Union_CreateSuccess() => _model;
 
     [Benchmark(Baseline = true)]
-    public ResultUnionCustom.ValueResult<FakeModel> UnionCustom_CreateSuccess() => _model;
+    public ResultUnionCustom.Result<FakeModel> UnionCustom_CreateSuccess() => _model;
 }

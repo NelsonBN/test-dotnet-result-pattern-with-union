@@ -32,23 +32,23 @@ public class CreatingErrorsFromArrayVoidResultBenchmarks
     }
 
     [Benchmark]
-    public ResultRecordStruct.VoidResult RecordStruct_CreateErrors() => ResultRecordStruct.VoidResult.From(_errorsRecordStruct);
+    public ResultRecordStruct.Result RecordStruct_CreateErrors() => ResultRecordStruct.Result.From(_errorsRecordStruct);
 
     [Benchmark]
-    public ResultStruct.VoidResult Struct_CreateErrors() => ResultStruct.VoidResult.From(_errorsStruct);
+    public ResultStruct.Result Struct_CreateErrors() => ResultStruct.Result.From(_errorsStruct);
 
     [Benchmark]
-    public ResultReadonlyStruct.VoidResult ReadonlyStruct_CreateErrors() => ResultReadonlyStruct.VoidResult.From(_errorsReadonlyStruct);
+    public ResultReadonlyStruct.Result ReadonlyStruct_CreateErrors() => ResultReadonlyStruct.Result.From(_errorsReadonlyStruct);
 
     [Benchmark]
-    public ResultClass.VoidResult Class_CreateErrors() => ResultClass.VoidResult.From(_errorsClass);
+    public ResultClass.Result Class_CreateErrors() => ResultClass.Result.From(_errorsClass);
 
     [Benchmark]
-    public ResultRecordClass.VoidResult RecordClass_CreateErrors() => ResultRecordClass.VoidResult.From(_errorsRecordClass);
+    public ResultRecordClass.Result RecordClass_CreateErrors() => ResultRecordClass.Result.From(_errorsRecordClass);
 
     [Benchmark]
-    public ResultUnion.VoidResult Union_CreateErrors() => ResultUnion.VoidResult.From(_errorsUnion);
+    public ResultUnion.Result Union_CreateErrors() => ResultUnion.Result.From(_errorsUnion);
 
     [Benchmark(Baseline = true)]
-    public ResultUnionCustom.VoidResult UnionCustom_CreateErrors() => ResultUnionCustom.VoidResult.From(_errorsUnionCustom);
+    public ResultUnionCustom.Result UnionCustom_CreateErrors() => ResultUnionCustom.Result.From(_errorsUnionCustom);
 }
