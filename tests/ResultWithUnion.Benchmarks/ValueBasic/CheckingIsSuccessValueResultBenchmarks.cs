@@ -17,6 +17,7 @@ public class CheckingIsSuccessValueResultBenchmarks
     private ResultClass<FakeModel> _class = null!;
     private ResultRecordClass<FakeModel> _recordClass = null!;
     private ResultUnion<FakeModel> _union;
+    private ResultUnionNonBoxing<FakeModel> _unionNonBoxing;
 
     [Params(true, false)]
     public bool Success { get; set; }
@@ -33,6 +34,7 @@ public class CheckingIsSuccessValueResultBenchmarks
         _class = Success ? new(model) : new(error);
         _recordClass = Success ? new(model) : new(error);
         _union = Success ? model : error;
+        _unionNonBoxing = Success ? model : error;
     }
 
     [Benchmark]
@@ -94,6 +96,17 @@ public class CheckingIsSuccessValueResultBenchmarks
     public bool Union_IsSuccess()
     {
         if(_union.IsSuccess)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    [Benchmark]
+    public bool UnionNonBoxing_IsSuccess()
+    {
+        if(_unionNonBoxing.IsSuccess)
         {
             return true;
         }

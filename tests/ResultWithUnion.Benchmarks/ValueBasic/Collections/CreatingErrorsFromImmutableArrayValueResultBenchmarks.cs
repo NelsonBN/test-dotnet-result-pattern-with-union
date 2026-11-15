@@ -38,4 +38,7 @@ public class CreatingErrorsFromImmutableArrayValueResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ResultUnion<FakeModel> Union_CreateErrors() => _errors;
+
+    [Benchmark]
+    public ResultUnionNonBoxing<FakeModel> UnionNonBoxing_CreateErrors() => _errors;
 }

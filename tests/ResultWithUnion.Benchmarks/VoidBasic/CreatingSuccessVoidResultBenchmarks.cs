@@ -26,4 +26,7 @@ public class CreatingSuccessVoidResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ResultUnion Union_CreateSuccess() => new();
+
+    [Benchmark]
+    public ResultUnionNonBoxing UnionNonBoxing_CreateSuccess() => new();
 }

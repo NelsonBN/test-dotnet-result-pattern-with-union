@@ -32,4 +32,7 @@ public class CreatingErrorVoidResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ResultUnion Union_CreateError() => _error;
+
+    [Benchmark]
+    public ResultUnionNonBoxing UnionNonBoxing_CreateError() => _error;
 }

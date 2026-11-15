@@ -37,4 +37,7 @@ public class CreatingErrorsFromHashSetVoidResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ResultUnion Union_CreateErrors() => ResultUnion.From(_errors);
+
+    [Benchmark]
+    public ResultUnionNonBoxing UnionNonBoxing_CreateErrors() => ResultUnionNonBoxing.From(_errors);
 }

@@ -17,6 +17,7 @@ public class GettingValueResultBenchmarks
     private ResultClass<FakeModel> _class = null!;
     private ResultRecordClass<FakeModel> _recordClass = null!;
     private ResultUnion<FakeModel> _union;
+    private ResultUnionNonBoxing<FakeModel> _unionNonBoxing;
 
     [GlobalSetup]
     public void Setup()
@@ -29,6 +30,7 @@ public class GettingValueResultBenchmarks
         _class = new(model);
         _recordClass = new(model);
         _union = model;
+        _unionNonBoxing = model;
     }
 
     [Benchmark]
@@ -48,4 +50,7 @@ public class GettingValueResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public FakeModel Union_GetValue() => _union.GetValue();
+
+    [Benchmark]
+    public FakeModel UnionNonBoxing_GetValue() => _unionNonBoxing.GetValue();
 }

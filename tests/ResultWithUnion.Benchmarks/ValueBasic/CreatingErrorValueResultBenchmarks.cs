@@ -33,4 +33,7 @@ public class CreatingErrorValueResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ResultUnion<FakeModel> Union_CreateError() => _error;
+
+    [Benchmark]
+    public ResultUnionNonBoxing<FakeModel> UnionNonBoxing_CreateError() => _error;
 }

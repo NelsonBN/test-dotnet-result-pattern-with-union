@@ -19,6 +19,7 @@ public class GettingErrorsVoidResultBenchmarks
     private ResultClass _class = null!;
     private ResultRecordClass _recordClass = null!;
     private ResultUnion _union;
+    private ResultUnionNonBoxing _unionNonBoxing;
 
     [Params(1, 5)]
     public int ErrorsCount { get; set; }
@@ -34,6 +35,7 @@ public class GettingErrorsVoidResultBenchmarks
         _class = ErrorsCount == 1 ? new(errors[0]) : new(errors);
         _recordClass = ErrorsCount == 1 ? new(errors[0]) : new(errors);
         _union = ErrorsCount == 1 ? errors[0] : ResultUnion.From(errors);
+        _unionNonBoxing = ErrorsCount == 1 ? errors[0] : ResultUnionNonBoxing.From(errors);
     }
 
     [Benchmark]
@@ -53,4 +55,7 @@ public class GettingErrorsVoidResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ImmutableArray<Error> Union_Errors() => _union.Errors;
+
+    [Benchmark]
+    public ImmutableArray<Error> UnionNonBoxing_Errors() => _unionNonBoxing.Errors;
 }
