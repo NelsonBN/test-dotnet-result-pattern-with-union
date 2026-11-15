@@ -10,5 +10,12 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Result.Benchmarks/Result.Benchmarks.csproj" />
+    <Project Path="tests/ResultClass.Tests/ResultClass.Tests.csproj" />
+    <Project Path="tests/ResultReadonlyStruct.Tests/ResultReadonlyStruct.Tests.csproj" />
+    <Project Path="tests/ResultRecordClass.Tests/ResultRecordClass.Tests.csproj" />
+    <Project Path="tests/ResultRecordStruct.Tests/ResultRecordStruct.Tests.csproj" />
+    <Project Path="tests/ResultStruct.Tests/ResultStruct.Tests.csproj" />
+    <Project Path="tests/ResultUnion.Tests/ResultUnion.Tests.csproj" />
+    <Project Path="tests/ResultUnionCustom.Tests/ResultUnionCustom.Tests.csproj" />
   </Folder>
 </Solution>
