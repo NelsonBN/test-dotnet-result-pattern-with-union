@@ -83,7 +83,7 @@ The hook blocks until each gap is filled with a real test, not an empty file: th
 2. Create the test file at the mirror path with the first Given_When_Then test (see [test-pattern.md](test-pattern.md)).
 3. Add the remaining behaviours until the coverage gate passes.
 
-Test files do not write `using Xunit;`, `using AwesomeAssertions;` or `using NSubstitute;`: the csproj declares them as implicit `<Using Include="..." />` items, each in an `ItemGroup` conditioned on its `PackageReference` (`@(PackageReference->AnyHaveMetadataValue('Identity', '...'))`), so a project only gets the usings of the libraries it references. Keep those groups below the `PackageReference` items, because MSBuild evaluates items in order.
+Test files do not write `using Xunit;`, `using AwesomeAssertions;` or `using NSubstitute;`: the csproj declares them as plain `<Using Include="..." />` items in one `ItemGroup`, one line per library the project references. Keep it that simple: no MSBuild conditions or item-order tricks.
 
 ## Existing repositories
 

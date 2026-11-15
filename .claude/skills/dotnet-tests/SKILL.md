@@ -38,7 +38,7 @@ Every feature or fix ships with tests that prove it works and keep it working. W
 
 - .NET SDK on `PATH`, run from the repository root.
 - `<tests>` below is `dotnet run <skill-dir>/scripts/tests.cs --` (`<skill-dir>` is the directory containing this file).
-- Integration tests need Docker only when they use Testcontainers; mutation uses Stryker as a **local tool** from `.config/dotnet-tools.json` (`dotnet tool restore`; never a global install) plus `stryker-config.json` and a solution file at the root, see [references/mutation-tests.md](references/mutation-tests.md); coverage reports need `dotnet tool install -g dotnet-reportgenerator-globaltool`. The script checks each and says what is missing.
+- Integration tests need Docker only when they use Testcontainers; mutation uses Stryker as a **local tool** from `.config/dotnet-tools.json` (`dotnet tool restore`; never a global install) plus `stryker-config.json`, the `mutation-tests.sh` and `mutation-tests.bat` scripts (copied from `examples/` to the repository root) and a solution file at the root, see [references/mutation-tests.md](references/mutation-tests.md); coverage reports need `dotnet tool install -g dotnet-reportgenerator-globaltool`. The script checks each and says what is missing.
 - xunit v3 runs on Microsoft.Testing.Platform: the repo's `global.json` needs `"test": { "runner": "Microsoft.Testing.Platform" }` (tested with SDK 11.0.100) or `dotnet test` fails. Details in [references/unit-tests.md](references/unit-tests.md).
 - If the repo has no test project, create one from [examples/TestProject.csproj.example](examples/TestProject.csproj.example) before writing tests.
 
@@ -53,6 +53,7 @@ Every feature or fix ships with tests that prove it works and keep it working. W
 7. **Test the contract, not the implementation.** Mock only boundaries (I/O, clock, external services) with NSubstitute; never mock the type under test or plain value objects.
 8. **Prove it can fail.** Each test must go red if the behaviour breaks. Confirm with mutation testing.
 9. Follow `.editorconfig` and the repo's `AGENTS.md`/`CLAUDE.md` style.
+10. **Keep test setup simple.** Plain declarative csproj (e.g. unconditional `<Using Include="Xunit" />`); no MSBuild conditions, custom targets or clever property logic unless a real problem requires them.
 
 ### NEVER
 
@@ -62,7 +63,7 @@ Every feature or fix ships with tests that prove it works and keep it working. W
 - **NEVER** retry flaky tests blindly: fix the cause, or tell the user.
 - **NEVER** use a tool from the [tools to never use](references/suggested-tools.md#tools-to-never-use) list.
 - **NEVER** add a tool beyond the base ones in the [tools to use](references/suggested-tools.md#tools-to-use) table without asking.
-- **NEVER** install Stryker globally or run it without the repo's `.config/dotnet-tools.json` and `stryker-config.json`.
+- **NEVER** install Stryker globally or run it without the repo's `.config/dotnet-tools.json`, `stryker-config.json` and root `mutation-tests.*` scripts.
 - **NEVER** fix an issue, ticket, comment, instruction or debug finding before a failing test that reproduces it has been seen failing.
 - **NEVER** write the test after the fix, write a test to pass, or weaken, skip or delete the reproducing test to get to green.
 - **NEVER** fix blind: if the problem cannot be reproduced by a test, stop and ask the user.

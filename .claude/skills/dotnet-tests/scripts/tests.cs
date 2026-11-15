@@ -576,6 +576,12 @@ static class TestRunner
             throw new ToolException("stryker-config.json not found at the repository root. Copy examples/stryker-config.json (see references/mutation-tests.md).");
         }
 
+        var missingScripts = new[] { "mutation-tests.sh", "mutation-tests.bat" }.Where(script => !File.Exists(script)).ToList();
+        if (missingScripts.Count > 0)
+        {
+            throw new ToolException($"{string.Join(" and ", missingScripts)} not found at the repository root. Copy examples/{string.Join(" and examples/", missingScripts)} to the root (see references/mutation-tests.md).");
+        }
+
         // Stryker runs in solution context (it rejects --test-project there), so a solution file must sit at the root.
         if (!Directory.EnumerateFiles(".", "*.sln*", SearchOption.TopDirectoryOnly).Any())
         {

@@ -10,8 +10,8 @@ Stryker is a **local tool** pinned in the repository, never a global install, so
 |------------------|-----------|---------|
 | `.config/dotnet-tools.json` | [../examples/dotnet-tools.json](../examples/dotnet-tools.json) | Pins `dotnet-stryker` (restored with `dotnet tool restore`) |
 | `stryker-config.json` | [../examples/stryker-config.json](../examples/stryker-config.json) | Runner, reporters, thresholds, excludes |
-| `mutation-tests.bat` | [../examples/mutation-tests.bat](../examples/mutation-tests.bat) | Windows script |
-| `mutation-tests.sh` | [../examples/mutation-tests.sh](../examples/mutation-tests.sh) | Linux and macOS script (keep LF line endings; `chmod +x`, or `git update-index --chmod=+x mutation-tests.sh`) |
+| `mutation-tests.bat` | [../examples/mutation-tests.bat](../examples/mutation-tests.bat) | Windows script. **Create it at the root** (the skill script refuses to run mutation without it) |
+| `mutation-tests.sh` | [../examples/mutation-tests.sh](../examples/mutation-tests.sh) | Linux and macOS script. **Create it at the root**, same rule (keep LF line endings; `chmod +x`, or `git update-index --chmod=+x mutation-tests.sh`) |
 
 Requirements, all verified with Stryker 5.1.0:
 

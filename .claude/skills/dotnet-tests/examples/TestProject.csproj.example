@@ -21,14 +21,10 @@
     <PackageReference Include="coverlet.MTP" Version="*" PrivateAssets="all" />
   </ItemGroup>
 
-  <!-- Implicit global usings, only for the libraries this project actually references (must stay below the PackageReference items) -->
-  <ItemGroup Condition="@(PackageReference->AnyHaveMetadataValue('Identity', 'xunit.v3'))">
+  <!-- Global usings for the test libraries: keep one line per PackageReference above, remove the ones the project does not use -->
+  <ItemGroup>
     <Using Include="Xunit" />
-  </ItemGroup>
-  <ItemGroup Condition="@(PackageReference->AnyHaveMetadataValue('Identity', 'AwesomeAssertions'))">
     <Using Include="AwesomeAssertions" />
-  </ItemGroup>
-  <ItemGroup Condition="@(PackageReference->AnyHaveMetadataValue('Identity', 'NSubstitute'))">
     <Using Include="NSubstitute" />
   </ItemGroup>
 
