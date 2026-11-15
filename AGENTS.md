@@ -23,26 +23,26 @@ An experiment, not a library: compares the **Result pattern** built the classic 
 
 Each variant exists as a value result `Result<Variant><TValue>` in `src/ValueBasic/` and a void result `Result<Variant>` in `src/VoidBasic/`: one type per file, file-scoped namespace `ResultWithUnion.ValueBasic` / `ResultWithUnion.VoidBasic`.
 
-Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultClass` (sealed), `ResultRecordClass` (sealed), and `ResultUnion` (`union ResultUnion<T>(T, Error, ImmutableArray<Error>)` / `union ResultUnion(Error, ImmutableArray<Error>)`). A second union, `ResultUnionNonBoxing` (hand-written `[Union]` readonly struct with `HasValue`/`TryGetValue`, benchmarked as `UnionNonBoxing_*`), measures the cost of boxing; `Union_*` stays the only baseline.
+Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultClass` (sealed), `ResultRecordClass` (sealed), and `ResultUnion` (`union ResultUnion<T>(T, ImmutableArray<Error>)` / `union ResultUnion(ImmutableArray<Error>)`). A second union, `ResultUnionNonBoxing` (hand-written `[Union]` readonly struct with `HasValue`/`TryGetValue`, benchmarked as `UnionNonBoxing_*`), measures the cost of boxing; `Union_*` stays the only baseline.
 
 - Out of scope, do not add: closed hierarchies, tuples, exceptions.
 - All variants share `src/Common/Error.cs`.
 - API: `IsSuccess`, `Value` (value results), `Errors`; `Value`/`Errors` throw `InvalidOperationException` in the wrong state.
 - Class/struct constructors: `(TValue)` / `()` for success, plus `(Error)`, `(ImmutableArray<Error>)` (zero copy), `(Error[])`, `(List<Error>)`, `(IEnumerable<Error>)`, `(params ReadOnlySpan<Error>)`. Dictionaries are unsupported by design. Every overload copies its input once.
 - Only the `IEnumerable<Error>` path uses `src/Common/ErrorCollection.cs`; do not duplicate it. All others call `ImmutableArray.Create(...)` directly.
-- The union offers `From(...)` static overloads for `Error[]`, `List<Error>`, `IEnumerable<Error>` and `params ReadOnlySpan<Error>`; `Error`, the value and `ImmutableArray<Error>` convert implicitly.
+- The union offers `From(...)` static overloads for `Error[]`, `List<Error>`, `IEnumerable<Error>` and `params ReadOnlySpan<Error>`; the value and `ImmutableArray<Error>` convert implicitly; a single `Error` goes through `From(error)`.
 
 ### Intentional deviations (the only allowed ones)
 
-- **`ResultUnionNonBoxing`**: hand-written union with fields and a tag; same case types, `GetValue()` and `From(...)` as `ResultUnion`, but nothing is boxed and a single `Error` is stored once as a one-element array.
-- **Union**: exposes `GetValue()` instead of `Value`; created via implicit conversions and `From(...)` instead of constructors; boxes its struct cases (`Error`, `ImmutableArray<Error>`), so a single `Error` is rebuilt into a one-element array on every `Errors` access. In the void union, success is `default`, so `default(ResultUnion).IsSuccess` is `true` (the void structs' `default` is a failure).
+- **`ResultUnionNonBoxing`**: hand-written union with fields and a tag; same case types, `GetValue()` and `From(...)` as `ResultUnion`, but nothing is boxed.
+- **Union**: exposes `GetValue()` instead of `Value`; created via implicit conversions and `From(...)` instead of constructors; boxes its `ImmutableArray<Error>` case (a 24 B box on every error creation). In the void union, success is `default`, so `default(ResultUnion).IsSuccess` is `true` (the void structs' `default` is a failure).
 - **`readonly struct`**: `IsSuccess` is a `readonly` field (no private setter allowed).
 - **Record struct / record class**: compiler-generated equality, `ToString` and deconstruction are the variation under test.
 
 ### Union pitfalls
 
 - A union lowers to a struct with one `object? Value` field; value-type cases are boxed.
-- **Value payload limitation** (`ResultUnion<T>`): `T` must not overlap `Error` or `ImmutableArray<Error>` (e.g. `object`), because the union cannot tell which case was intended; a `T` of `object` can report `IsSuccess` for an error. A `null` success payload is also read as a failure and `GetValue()` throws, whereas the non-union value results accept it. Value-result comparisons therefore apply to non-null, non-overlapping payloads.
+- **Value payload limitation** (`ResultUnion<T>`): `T` must not overlap `ImmutableArray<Error>` (e.g. `object`), because the union cannot tell which case was intended; a `T` of `object` can report `IsSuccess` for an error. A `null` success payload is also read as a failure and `GetValue()` throws, whereas the non-union value results accept it. Value-result comparisons therefore apply to non-null, non-overlapping payloads.
 - Always add a `null => ...` arm to `switch` expressions (`default` has null contents).
 - Helpers (`IsSuccess`, `Match`, ...) are hand-written; the union adds no equality or deconstruction.
 - Runtime types (`UnionAttribute`, `IUnion`) ship with .NET 11, hence net11 only.
