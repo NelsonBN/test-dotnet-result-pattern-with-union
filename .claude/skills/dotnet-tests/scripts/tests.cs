@@ -15,6 +15,7 @@ using System.Xml.Linq;
 //   tests.cs unit                 run the unit tests (everything not tagged Category=Integration)
 //   tests.cs integration          run the integration tests (Category=Integration); checks Docker first
 //   tests.cs coverage             run the unit tests with coverage and evaluate the gate on the changed files
+//   tests.cs quality              coverage + mutation, correlated per file and per surviving mutant (artifacts/dotnet-tests/quality.md)
 //   tests.cs mutation             run Stryker.NET on the files changed versus the default branch
 //   tests.cs all                  unit + coverage (what the Stop hook runs)
 //   tests.cs --report             write and print artifacts/dotnet-tests/report.md
@@ -35,6 +36,8 @@ sealed record FileCoverage(string File, int Lines, int LinesCovered, int Branche
 
     public double BranchRate => Branches == 0 ? 100 : 100.0 * BranchesCovered / Branches;
 }
+
+sealed record Mutant(string File, int Line, string Mutator, string Status, string Replacement);
 
 sealed record HookState(string Verified, string Waived, int Blocks);
 
@@ -74,9 +77,10 @@ static class TestRunner
                 "integration" => RunTests(integration: true),
                 "coverage" => RunCoverage(gate, baseRef),
                 "mutation" => RunMutation(gate, baseRef),
+                "quality" => RunQuality(gate, baseRef),
                 "all" => Combine(Combine(RunStructure(gate, baseRef), () => RunTests(integration: false)), () => RunCoverage(gate, baseRef)),
                 "--report" => WriteReport(),
-                _ => throw new ToolException("usage: structure | unit | integration | coverage | mutation | all | --report | hook stop"),
+                _ => throw new ToolException("usage: structure | unit | integration | coverage | mutation | quality | all | --report | hook stop"),
             };
         }
         catch (ToolException e)
@@ -398,7 +402,7 @@ static class TestRunner
 
     static int RunCoverage(Gate gate, string baseRef) => EvaluateCoverage(gate, baseRef, $"{StateDir}/results").Passed ? 0 : 1;
 
-    static (bool Passed, List<FileCoverage> Failing, List<string> Messages) EvaluateCoverage(Gate gate, string baseRef, string resultsDir)
+    static (bool Passed, List<FileCoverage> Failing, List<string> Messages, List<FileCoverage> All) EvaluateCoverage(Gate gate, string baseRef, string resultsDir)
     {
         var projects = UnitProjects();
         if (projects.Count == 0)
@@ -427,7 +431,7 @@ static class TestRunner
                 var failed = output.Split('\n').Where(l => Regex.IsMatch(l, "^\\s*(Failed|error)\\b", RegexOptions.IgnoreCase)).Select(l => l.Trim()).Take(20).ToList();
                 SaveSection("coverage", new { passed = false, reason = "tests failed", failed });
                 failed.ForEach(Out.WriteLine);
-                return (false, [], ["tests failed before coverage could be evaluated"]);
+                return (false, [], ["tests failed before coverage could be evaluated"], []);
             }
         }
 
@@ -465,7 +469,7 @@ static class TestRunner
 
         TryReportGenerator(reports);
         SaveSection("coverage", new { passed = failing.Count == 0, gate, files = changed.Count, failing = failing.Select(f => new { file = Path.GetRelativePath(".", f.File), f.LineRate, f.BranchRate, uncovered = Ranges(f.Uncovered) }), messages });
-        return (failing.Count == 0, failing, messages);
+        return (failing.Count == 0, failing, messages, coverage);
     }
 
     static bool SamePath(string reported, string absolute)
@@ -551,7 +555,9 @@ static class TestRunner
 
     // ---------------------------------------------------------------- Mutation
 
-    static int RunMutation(Gate gate, string baseRef)
+    static int RunMutation(Gate gate, string baseRef) => MutationRun(gate, baseRef).Exit;
+
+    static (int Exit, List<string> Reports) MutationRun(Gate gate, string baseRef)
     {
         var projects = UnitProjects();
         if (projects.Count == 0)
@@ -559,36 +565,154 @@ static class TestRunner
             throw new ToolException($"no unit test project found (expected a *{gate.UnitSuffix}.csproj); cannot run mutation tests.");
         }
 
-        if (TryExec("dotnet", "stryker", "--version") != 0)
+        var manifest = new[] { ".config/dotnet-tools.json", "dotnet-tools.json" }.FirstOrDefault(File.Exists);
+        if (manifest is null || !File.ReadAllText(manifest).Contains("dotnet-stryker", StringComparison.Ordinal))
         {
-            throw new ToolException("dotnet-stryker is not installed (dotnet tool install -g dotnet-stryker).");
+            throw new ToolException("dotnet-stryker is not in a local tool manifest. Copy examples/dotnet-tools.json to .config/dotnet-tools.json (see references/mutation-tests.md).");
+        }
+
+        if (!File.Exists("stryker-config.json"))
+        {
+            throw new ToolException("stryker-config.json not found at the repository root. Copy examples/stryker-config.json (see references/mutation-tests.md).");
+        }
+
+        // Stryker runs in solution context (it rejects --test-project there), so a solution file must sit at the root.
+        if (!Directory.EnumerateFiles(".", "*.sln*", SearchOption.TopDirectoryOnly).Any())
+        {
+            throw new ToolException("no solution file (.sln or .slnx) at the repository root; Stryker needs it.");
         }
 
         if (ChangedSourceFiles(baseRef).Count == 0)
         {
             Out.WriteLine("No changed source files to mutate.");
             SaveSection("mutation", new { passed = true, note = "nothing to mutate" });
-            return 0;
+            return (0, []);
         }
 
+        if (Exec("dotnet", ["tool", "restore"]).Exit != 0)
+        {
+            throw new ToolException("`dotnet tool restore` failed; check .config/dotnet-tools.json and the NuGet source.");
+        }
+
+        // Stryker's --since needs a branch, tag or commit SHA ("HEAD" is rejected).
+        var since = Git("rev-parse", baseRef)?.Trim() ?? baseRef;
+        var threshold = gate.MutationScore.ToString("F0");
+        var high = Math.Max(90, gate.MutationScore).ToString("F0");
         var exitCode = 0;
+        var reports = new List<string>();
         foreach (var project in projects)
         {
-            var dir = Path.GetDirectoryName(project)!;
-            var arguments = new List<string> { "stryker", "--since:" + baseRef, "--threshold-break", gate.MutationScore.ToString("F0"), "--output", Path.GetFullPath($"{StateDir}/mutation"), "--project", Path.GetFileNameWithoutExtension(project)[..^gate.UnitSuffix.Length] + ".csproj" };
-            if (File.Exists(Path.Combine(dir, "stryker-config.json")))
-            {
-                arguments.AddRange(["--config-file", "stryker-config.json"]);
-            }
-
-            var (exit, output) = ExecLogged("mutation.log", "dotnet", arguments, dir);
-            var score = Regex.Match(output, "mutation score[^\\d]*(\\d+(\\.\\d+)?)", RegexOptions.IgnoreCase);
-            Out.WriteLine($"{(exit == 0 ? "PASS" : "FAIL")} {Path.GetFileName(project)} mutation score {(score.Success ? score.Groups[1].Value + "%" : "n/a")} (gate {gate.MutationScore}%)");
-            SaveSection("mutation", new { passed = exit == 0, project = Path.GetFileName(project), score = score.Success ? score.Groups[1].Value : null, gate = gate.MutationScore });
+            var source = Path.GetFileNameWithoutExtension(project)[..^gate.UnitSuffix.Length] + ".csproj";
+            var outDir = Path.GetFullPath($"{StateDir}/mutation/{Path.GetFileNameWithoutExtension(source)}");
+            reports.Add(Path.Combine(outDir, "reports", "mutation-report.json"));
+            List<string> arguments =
+            [
+                "stryker", "--config-file", "stryker-config.json", "--project", source, $"--since:{since}",
+                "--break-at", threshold, "--threshold-low", threshold, "--threshold-high", high,
+                "--output", outDir,
+            ];
+            var (exit, output) = ExecLogged("mutation.log", "dotnet", arguments);
+            var score = Regex.Match(output, "final mutation score is (\\d+(\\.\\d+)?)", RegexOptions.IgnoreCase);
+            Out.WriteLine($"{(exit == 0 ? "PASS" : "FAIL")} {source} mutation score {(score.Success ? score.Groups[1].Value + "%" : "n/a")} (gate {gate.MutationScore}%)");
+            SaveSection("mutation", new { passed = exit == 0, project = source, score = score.Success ? score.Groups[1].Value : null, gate = gate.MutationScore });
             exitCode |= exit == 0 ? 0 : 1;
         }
 
-        return exitCode;
+        return (exitCode, reports);
+    }
+
+    // ---------------------------------------------------------------- Quality (coverage x mutation)
+
+    static List<Mutant> LoadMutants(string reportPath)
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(reportPath));
+        var mutants = new List<Mutant>();
+        foreach (var file in document.RootElement.GetProperty("files").EnumerateObject())
+        {
+            foreach (var m in file.Value.GetProperty("mutants").EnumerateArray())
+            {
+                var line = m.GetProperty("location").GetProperty("start").GetProperty("line").GetInt32();
+                mutants.Add(new Mutant(file.Name, line, JsonString(m, "mutatorName"), JsonString(m, "status"), JsonString(m, "replacement")));
+            }
+        }
+
+        return mutants;
+    }
+
+    // Joins the Stryker report with the coverage data, per file and per surviving mutant, so the gaps are visible:
+    // a survivor on an uncovered line needs a test that reaches it; a survivor on a covered line needs a stronger assertion.
+    static int RunQuality(Gate gate, string baseRef)
+    {
+        var coverage = EvaluateCoverage(gate, baseRef, $"{StateDir}/results");
+        var (mutationExit, reports) = MutationRun(gate, baseRef);
+        var mutants = reports.Where(File.Exists).SelectMany(LoadMutants).ToList();
+
+        var report = new List<string>
+        {
+            "# Test quality: coverage x mutation",
+            "",
+            $"Gates: line {gate.LineCoverage}%, branch {gate.BranchCoverage}%, mutation {gate.MutationScore}%.",
+            "",
+            "| File | Line | Branch | Mutation | Killed | Survived | No coverage | Verdict |",
+            "|------|------|--------|----------|--------|----------|-------------|---------|",
+        };
+        var details = new List<string>();
+        var failed = !coverage.Passed || mutationExit != 0;
+        var rows = new List<object>();
+        foreach (var group in mutants.GroupBy(m => m.File).OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            var cov = coverage.All.FirstOrDefault(c => SamePath(c.File, group.Key));
+            var detected = group.Count(m => m.Status is "Killed" or "Timeout");
+            var survived = group.Count(m => m.Status == "Survived");
+            var noCoverage = group.Count(m => m.Status == "NoCoverage");
+            var total = detected + survived + noCoverage;
+            var score = total == 0 ? 100.0 : 100.0 * detected / total;
+
+            var reasons = new List<string>();
+            if (cov is not null && cov.LineRate < gate.LineCoverage)
+            {
+                reasons.Add("line coverage");
+            }
+
+            if (cov is not null && cov.BranchRate < gate.BranchCoverage)
+            {
+                reasons.Add("branch coverage");
+            }
+
+            if (score < gate.MutationScore)
+            {
+                reasons.Add(cov is not null && cov.LineRate >= gate.LineCoverage ? "mutation score (covered but not verified)" : "mutation score");
+            }
+
+            failed |= reasons.Count > 0;
+            var name = Rel(group.Key);
+            var verdict = reasons.Count == 0 ? "PASS" : "FAIL: " + string.Join(", ", reasons);
+            report.Add($"| {name} | {(cov is null ? "n/a" : $"{cov.LineRate:F1}%")} | {(cov is null ? "n/a" : $"{cov.BranchRate:F1}%")} | {score:F1}% | {detected} | {survived} | {noCoverage} | {verdict} |");
+            rows.Add(new { file = name, line = cov?.LineRate, branch = cov?.BranchRate, mutation = score, detected, survived, noCoverage, verdict });
+
+            foreach (var mutant in group.Where(m => m.Status is "Survived" or "NoCoverage").OrderBy(m => m.Line))
+            {
+                var uncovered = mutant.Status == "NoCoverage" || (cov?.Uncovered.Contains(mutant.Line) ?? false);
+                var action = uncovered
+                    ? "NOT COVERED: add a test that reaches this line"
+                    : "COVERED BUT NOT VERIFIED: tighten the assertion so this change fails a test";
+                details.Add($"- {name}:{mutant.Line}  {mutant.Mutator}{(mutant.Replacement.Length > 0 ? $" -> `{mutant.Replacement}`" : "")}  {action}");
+            }
+        }
+
+        if (mutants.Count == 0)
+        {
+            report.Add("| (no mutants in the changed code) | | | | | | | |");
+        }
+
+        report.AddRange(["", $"## Surviving mutants ({details.Count})", ""]);
+        report.AddRange(details.Count == 0 ? ["None."] : details);
+        report.AddRange(["", "Reading it: a file with high coverage and a low mutation score runs its code without verifying it; fix those first (strengthen assertions). Survivors on uncovered lines need new tests."]);
+
+        File.WriteAllText($"{StateDir}/quality.md", string.Join("\n", report) + "\n", new UTF8Encoding(false));
+        report.ForEach(Out.WriteLine);
+        SaveSection("quality", new { passed = !failed, files = rows, survivors = details.Count });
+        return failed ? 1 : 0;
     }
 
     // ---------------------------------------------------------------- Report
@@ -613,7 +737,7 @@ static class TestRunner
 
         var sections = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(File.ReadAllText(path)) ?? [];
         var report = new StringBuilder("# dotnet-tests report\n\n| Step | Result |\n|------|--------|\n");
-        foreach (var name in new[] { "structure", "unit", "integration", "coverage", "mutation" })
+        foreach (var name in new[] { "structure", "unit", "integration", "coverage", "mutation", "quality" })
         {
             if (sections.TryGetValue(name, out var s))
             {

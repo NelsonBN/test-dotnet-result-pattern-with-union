@@ -1,7 +1,7 @@
 ---
 name: dotnet-tests
-description: 'Write, run and gate tests for .NET code: unit tests (xunit, AwesomeAssertions, NSubstitute), narrow integration tests (Testcontainers, WebApplicationFactory, Assertions.Web) and mutation tests (Stryker.NET), all in one fixed Arrange-Act-Assert / Given_When_Then pattern, with a coverage gate (coverlet.MTP + ReportGenerator) and a Stop hook that sends the agent back to finish the tests when they fail or coverage is too low. Use when implementing or changing a feature, fixing a bug (regression test first), adding or reviewing tests, checking coverage, killing surviving mutants, or before declaring a change done. Command form: /dotnet-tests [unit|integration|coverage|mutation|all].'
-argument-hint: '[unit|integration|coverage|mutation|all]'
+description: 'Write, run and gate tests for .NET code: unit tests (xunit, AwesomeAssertions, NSubstitute), narrow integration tests (Testcontainers, WebApplicationFactory, Assertions.Web) and mutation tests (Stryker.NET), all in one fixed Arrange-Act-Assert / Given_When_Then pattern, with a coverage gate (coverlet.MTP + ReportGenerator) and a Stop hook that sends the agent back to finish the tests when they fail or coverage is too low. Use when implementing or changing a feature, fixing a bug (regression test first), adding or reviewing tests, checking coverage, killing surviving mutants, or before declaring a change done. Command form: /dotnet-tests [unit|integration|coverage|mutation|quality|all].'
+argument-hint: '[unit|integration|coverage|mutation|quality|all]'
 license: MIT
 allowed-tools: Bash
 ---
@@ -26,7 +26,7 @@ Every feature or fix ships with tests that prove it works and keep it working. W
 
 - .NET SDK on `PATH`, run from the repository root.
 - `<tests>` below is `dotnet run <skill-dir>/scripts/tests.cs --` (`<skill-dir>` is the directory containing this file).
-- Integration tests need Docker only when they use Testcontainers; mutation needs `dotnet tool install -g dotnet-stryker`; coverage reports need `dotnet tool install -g dotnet-reportgenerator-globaltool`. The script checks each and says what is missing.
+- Integration tests need Docker only when they use Testcontainers; mutation uses Stryker as a **local tool** from `.config/dotnet-tools.json` (`dotnet tool restore`; never a global install) plus `stryker-config.json` and a solution file at the root, see [references/mutation-tests.md](references/mutation-tests.md); coverage reports need `dotnet tool install -g dotnet-reportgenerator-globaltool`. The script checks each and says what is missing.
 - xunit v3 runs on Microsoft.Testing.Platform: the repo's `global.json` needs `"test": { "runner": "Microsoft.Testing.Platform" }` (tested with SDK 11.0.100) or `dotnet test` fails. Details in [references/unit-tests.md](references/unit-tests.md).
 - If the repo has no test project, create one from [examples/TestProject.csproj.example](examples/TestProject.csproj.example) before writing tests.
 
@@ -49,6 +49,7 @@ Every feature or fix ships with tests that prove it works and keep it working. W
 - **NEVER** retry flaky tests blindly: fix the cause, or tell the user.
 - **NEVER** use a tool from the [tools to never use](references/suggested-tools.md#tools-to-never-use) list.
 - **NEVER** add a tool beyond the base ones in the [tools to use](references/suggested-tools.md#tools-to-use) table without asking.
+- **NEVER** install Stryker globally or run it without the repo's `.config/dotnet-tools.json` and `stryker-config.json`.
 - **NEVER** commit or push.
 
 ## Workflow
@@ -68,11 +69,12 @@ Follow in order.
    | Integration tests | `<tests> integration` |
    | Coverage gate | `<tests> coverage` |
    | Mutation (changed files) | `<tests> mutation` |
+   | Coverage x mutation, correlated | `<tests> quality` |
    | Structure + unit + coverage (what the hook runs) | `<tests> all` |
 
    Outputs go to `artifacts/dotnet-tests/`. Exit codes: `0` pass, `1` gate or test failure, `2` tooling error (fix the environment, not the gate).
 6. **Coverage gate** ([references/coverage.md](references/coverage.md)): changed code must reach the thresholds in [quality-gate.json](quality-gate.json). Add tests for the uncovered lines and branches listed in the output.
-7. **Mutation** ([references/mutation-tests.md](references/mutation-tests.md)): run on changed files; kill every survivor you can by strengthening assertions or adding cases. List the ones you cannot kill (equivalent mutants) in the report.
+7. **Quality** ([references/mutation-tests.md](references/mutation-tests.md)): run `<tests> quality`. It joins coverage and mutation per file and per surviving mutant (`artifacts/dotnet-tests/quality.md`): *not covered* survivors need a test that reaches the line, *covered but not verified* survivors need a stronger assertion (fix those first). Repeat until every changed file meets the line, branch and mutation gates; list the equivalent mutants you cannot kill in the report.
 8. **Review** against [references/quality-gate.md](references/quality-gate.md) (definition of done and test smells), then run `dotnet-lint`.
 9. **Report** (always last): `<tests> --report` writes and prints `artifacts/dotnet-tests/report.md`: tests added, results, coverage vs gate, mutation score, surviving mutants, decisions needed.
 
@@ -85,6 +87,7 @@ Follow in order.
 | `unit` / `integration` | Run only that category |
 | `coverage` | Run the coverage gate |
 | `mutation` | Run Stryker on files changed vs the default branch |
+| `quality` | Coverage + mutation correlated into one report and verdict |
 
 ## Hook enforcement
 
@@ -101,7 +104,7 @@ A `Stop` hook (`.claude/settings.json`) runs `<tests> hook stop` when the agent 
 - [references/test-pattern.md](references/test-pattern.md): AAA, naming, layout, builders, data-driven tests
 - [references/unit-tests.md](references/unit-tests.md): xunit, AwesomeAssertions, NSubstitute test doubles
 - [references/integration-tests.md](references/integration-tests.md): when and how, Testcontainers, HTTP, isolation
-- [references/mutation-tests.md](references/mutation-tests.md): Stryker config, reading and killing survivors
+- [references/mutation-tests.md](references/mutation-tests.md): Stryker setup (tool manifest, config, `mutation-tests.*` scripts), the coverage x mutation `quality` report, killing survivors
 - [references/coverage.md](references/coverage.md): coverlet, ReportGenerator, what may be excluded
 - [references/quality-gate.md](references/quality-gate.md): thresholds, definition of done, smells, flaky policy, CI
 - [references/suggested-tools.md](references/suggested-tools.md): every tool (always vs specific cases), optional extras to propose (ask first) and tools never to use

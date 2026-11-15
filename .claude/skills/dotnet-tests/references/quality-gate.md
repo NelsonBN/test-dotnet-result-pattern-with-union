@@ -10,7 +10,8 @@ Stored in [../quality-gate.json](../quality-gate.json); never lowered without th
 | All tests pass | required | Stop hook, `all` |
 | Line coverage (changed files) | 90% | Stop hook, `coverage` |
 | Branch coverage (changed files) | 85% | Stop hook, `coverage` |
-| Mutation score (changed files) | 80% | `mutation` (on demand) |
+| Mutation score (changed files) | 80% | `mutation`, `quality` (on demand) |
+| Coverage and mutation agree (no file passes one but fails the other) | required | `quality` (on demand) |
 
 ## Definition of done
 
@@ -19,7 +20,7 @@ Stored in [../quality-gate.json](../quality-gate.json); never lowered without th
 - [ ] Tests follow AAA and Given_When_Then, one behaviour each, AwesomeAssertions only.
 - [ ] Unit tests are fast and deterministic; integration tests only where needed and tagged.
 - [ ] `all` passes (tests + coverage gate).
-- [ ] `mutation` meets the threshold; remaining survivors are explained.
+- [ ] `quality` passes: every changed file meets line, branch and mutation gates; every remaining survivor is explained (equivalent mutant) in the report.
 - [ ] No skipped tests, no coverage excludes added, no thresholds changed.
 - [ ] `dotnet-lint` is clean on the test code too.
 - [ ] Report printed.
@@ -54,8 +55,8 @@ xunit runs test classes in parallel. Keep per-test state local, fixtures read-on
   with: { global-json-file: global.json }
 - run: dotnet tool install -g dotnet-reportgenerator-globaltool
 - run: dotnet run .claude/skills/dotnet-tests/scripts/tests.cs -- all
-- run: dotnet tool install -g dotnet-stryker
-- run: dotnet run .claude/skills/dotnet-tests/scripts/tests.cs -- mutation
+- run: dotnet tool restore
+- run: dotnet run .claude/skills/dotnet-tests/scripts/tests.cs -- quality
 - uses: actions/upload-artifact@v4
   with: { name: test-reports, path: artifacts/dotnet-tests }
 ```

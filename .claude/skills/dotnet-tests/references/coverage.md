@@ -41,7 +41,7 @@ Never exclude to pass the gate: no `[ExcludeFromCodeCoverage]` on logic, no extr
 
 - Line coverage: share of executable lines hit. Branch coverage: share of `if`/`switch`/`?:`/`&&` outcomes hit; this is the one that exposes missing negative cases.
 - 100% is not required; an unreachable defensive branch can stay uncovered (list it in the report).
-- High coverage with assertion-free tests is worthless: that is what mutation testing catches.
+- High coverage with assertion-free tests is worthless: that is what mutation testing catches. `tests.cs quality` correlates the two per file and per surviving mutant (see [mutation-tests.md](mutation-tests.md)).
 
 ## CI
 
