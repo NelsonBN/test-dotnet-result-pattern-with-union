@@ -95,6 +95,7 @@ StyleCopReport.xml
 *.tli
 *.tlh
 *.tmp
+.tmp/
 *.tmp_proj
 *_wpftmp.csproj
 *.log
@@ -485,3 +486,5 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+StrykerOutput/

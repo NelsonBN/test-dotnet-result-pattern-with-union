@@ -1,0 +1,123 @@
+name: 'Tests'
+
+
+on:
+  workflow_dispatch:
+
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches:
+      - main
+
+
+env:
+  COVERAGE_REPORT_DIRECTORY: 'CodeCoverageReports'
+
+  # Set up the .NET environment to improve test performance and reliability
+  DOTNET_CLI_TELEMETRY_OPTOUT: true # Disable .NET CLI telemetry
+  DOTNET_NOLOGO: true # Disable .NET CLI logo
+  DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: true # Enable ANSI color redirection
+  TERM: xterm # Enable ANSI color redirection
+  NUGET_XMLDOC_MODE: skip # Disable NuGet XML documentation generation
+
+
+permissions: {}
+
+
+# A new push to the same PR supersedes the previous run
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+
+jobs:
+
+  test-project:
+    name: "Test project"
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      issues: read
+      checks: write
+      pull-requests: write
+
+    steps:
+    - name: "Checkout"
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+    - name: "Setup .NET"
+      uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73
+      with:
+        global-json-file: 'global.json'
+
+    - name: "Restore dependencies"
+      run: dotnet restore
+
+    - name: "Build"
+      run: dotnet build --configuration Release --no-restore
+
+    - name: "Run tests"
+      run: dotnet test --solution test-dotnet-result-pattern-with-union.slnx --configuration Release --no-build --verbosity normal --results-directory ${{ github.workspace }}/${{ env.COVERAGE_REPORT_DIRECTORY }} -- --report-xunit-junit --coverlet --coverlet-output-format cobertura
+
+    - name: "Combine Coverage Reports" # This is because one report is produced per project, and we want one result for all of them.
+      uses: danielpalme/ReportGenerator-GitHub-Action@861674232075b2c6bd1405a04c4bb9b150653e81
+      with:
+        reports: "**/coverage.cobertura.*.xml" # REQUIRED # The coverage reports that should be parsed (separated by semicolon). Globbing is supported.
+        targetdir: "${{ github.workspace }}" # REQUIRED # The directory where the generated report should be saved.
+        reporttypes: "Cobertura" # The output formats and scope (separated by semicolon) Values: Badges, Clover, Cobertura, CsvSummary, Html, Html_Dark, Html_Light, Html_BlueRed, HtmlChart, HtmlInline, HtmlInline_AzurePipelines, HtmlInline_AzurePipelines_Dark, HtmlInline_AzurePipelines_Light, HtmlSummary, JsonSummary, Latex, LatexSummary, lcov, MarkdownSummary, MarkdownSummaryGithub, MarkdownDeltaSummary, MHtml, PngChart, SonarQube, TeamCitySummary, TextSummary, TextDeltaSummary, Xml, XmlSummary
+        verbosity: "Info" # The verbosity level of the log messages. Values: Verbose, Info, Warning, Error, Off
+        title: "Code Coverage" # Optional title.
+        tag: "${{ github.run_number }}_${{ github.run_id }}" # Optional tag or build version.
+        customSettings: "" # Optional custom settings (separated by semicolon). See: https://github.com/danielpalme/ReportGenerator/wiki/Settings.
+        toolpath: "reportgeneratortool" # Default directory for installing the dotnet tool.
+
+    - name: "Upload Combined Coverage"
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: 'Coverage'
+        path: ${{ github.workspace }}/Cobertura.xml
+        if-no-files-found: error
+
+    - name: "Publish code coverage report"
+      uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95
+      with:
+        filename: "Cobertura.xml"
+        badge: true
+        fail_below_min: false # just informative for now
+        format: markdown
+        hide_branch_rate: false
+        hide_complexity: false
+        indicators: true
+        output: both
+        thresholds: "10 30"
+
+    - name: "Add Coverage in PR Comment"
+      uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88
+      if: github.event_name == 'pull_request'
+      with:
+        header: coverage-report
+        hide_and_recreate: true
+        hide_classify: "OUTDATED"
+        path: code-coverage-results.md
+
+    - name: "Upload Test Results"
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: 'TestResults'
+        path: ${{ github.workspace }}/${{ env.COVERAGE_REPORT_DIRECTORY }}/**/*
+        if-no-files-found: error
+
+    - name: "Publish Test Results"
+      uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a
+      if: always()
+      with:
+        name: "Test Results"
+        path: "${{ github.workspace }}/${{ env.COVERAGE_REPORT_DIRECTORY }}/**/*.junit.xml"
+        reporter: java-junit
+
+    - name: "Publish Test Summary"
+      uses: EnricoMi/publish-unit-test-result-action@7622c5bf3d112a72ab4fa3951c2aa5723d8ab92d
+      if: always()
+      with:
+        check_name: "Test Summary"
+        files: "${{ github.workspace }}/${{ env.COVERAGE_REPORT_DIRECTORY }}/**/*.junit.xml"

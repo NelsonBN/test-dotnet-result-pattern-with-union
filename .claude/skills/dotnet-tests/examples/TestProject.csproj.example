@@ -1,0 +1,43 @@
+<!-- Requires global.json at the repo root, because xunit.v3 runs on Microsoft.Testing.Platform and the .NET 10+ SDK
+     only supports that through the new `dotnet test`:  { "test": { "runner": "Microsoft.Testing.Platform" } }
+     Example only: copy to <Project>.Tests/<Project>.Tests.csproj and pin versions to the latest stable
+     (check with `dotnet package search <id>`). With central package management, move Version to Directory.Packages.props. -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="*" />
+    <PackageReference Include="xunit.v3" Version="*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="*" PrivateAssets="all" />
+    <PackageReference Include="AwesomeAssertions" Version="*" />
+    <PackageReference Include="NSubstitute" Version="*" />
+    <PackageReference Include="coverlet.MTP" Version="*" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Global usings for the test libraries: keep one line per PackageReference above, remove the ones the project does not use -->
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="AwesomeAssertions" />
+    <Using Include="NSubstitute" />
+  </ItemGroup>
+
+  <!-- Integration tests only (separate project or the same one) -->
+  <ItemGroup Condition="'$(IncludeIntegration)' == 'true'">
+    <PackageReference Include="Testcontainers" Version="*" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="*" />
+    <PackageReference Include="Assertions.Web" Version="*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/MyProject.Tests/MyProject.Tests.csproj (or tests/MyProject.IntegrationTests/...): reference only its own source project -->
+    <ProjectReference Include="..\..\src\MyProject\MyProject.csproj" />
+  </ItemGroup>
+
+</Project>
