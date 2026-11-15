@@ -1,4 +1,4 @@
-﻿namespace ResultUnionCustom;
+namespace ResultUnionCustom;
 
 public readonly struct Error
 {

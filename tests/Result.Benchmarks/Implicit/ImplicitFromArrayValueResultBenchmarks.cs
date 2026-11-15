@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using Result.Benchmarks.Fakes;

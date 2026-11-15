@@ -1,4 +1,4 @@
-﻿namespace ResultRecordClass;
+namespace ResultRecordClass;
 
 public readonly struct Error
 {
