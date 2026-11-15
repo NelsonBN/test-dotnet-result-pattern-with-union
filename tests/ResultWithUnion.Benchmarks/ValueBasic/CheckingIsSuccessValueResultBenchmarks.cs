@@ -33,8 +33,8 @@ public class CheckingIsSuccessValueResultBenchmarks
         _readonlyStruct = Success ? new(model) : new(error);
         _class = Success ? new(model) : new(error);
         _recordClass = Success ? new(model) : new(error);
-        _union = Success ? model : error;
-        _unionNonBoxing = Success ? model : error;
+        _union = Success ? model : ResultUnion<FakeModel>.From(error);
+        _unionNonBoxing = Success ? model : ResultUnionNonBoxing<FakeModel>.From(error);
     }
 
     [Benchmark]

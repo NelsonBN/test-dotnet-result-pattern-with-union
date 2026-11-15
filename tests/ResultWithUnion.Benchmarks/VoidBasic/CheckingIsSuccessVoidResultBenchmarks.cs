@@ -31,8 +31,8 @@ public class CheckingIsSuccessVoidResultBenchmarks
         _readonlyStruct = Success ? new() : new(error);
         _class = Success ? new() : new(error);
         _recordClass = Success ? new() : new(error);
-        _union = Success ? new ResultUnion() : error;
-        _unionNonBoxing = Success ? new ResultUnionNonBoxing() : error;
+        _union = Success ? new ResultUnion() : ResultUnion.From(error);
+        _unionNonBoxing = Success ? new ResultUnionNonBoxing() : ResultUnionNonBoxing.From(error);
     }
 
     [Benchmark]

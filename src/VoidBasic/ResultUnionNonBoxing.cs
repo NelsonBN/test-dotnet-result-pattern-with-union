@@ -10,8 +10,7 @@ namespace ResultWithUnion.VoidBasic;
 public readonly struct ResultUnionNonBoxing : IUnion
 {
     private const byte NoneTag = 0;
-    private const byte ErrorTag = 1;
-    private const byte ErrorsTag = 2;
+    private const byte ErrorsTag = 1;
 
     private readonly ImmutableArray<Error> _errors;
     private readonly byte _tag;
@@ -19,7 +18,7 @@ public readonly struct ResultUnionNonBoxing : IUnion
     public ResultUnionNonBoxing(Error error)
     {
         _errors = ImmutableArray.Create(error);
-        _tag = ErrorTag;
+        _tag = ErrorsTag;
     }
 
     public ResultUnionNonBoxing(ImmutableArray<Error> errors)
@@ -30,24 +29,9 @@ public readonly struct ResultUnionNonBoxing : IUnion
 
     public object? Value => _tag switch
     {
-        ErrorTag => _errors[0],
         ErrorsTag => _errors,
         _ => null,
     };
-
-    public bool HasValue => _tag != NoneTag;
-
-    public bool TryGetValue(out Error value)
-    {
-        value = _tag == ErrorTag ? _errors[0] : default;
-        return _tag == ErrorTag;
-    }
-
-    public bool TryGetValue(out ImmutableArray<Error> value)
-    {
-        value = _errors;
-        return _tag == ErrorsTag;
-    }
 
     public bool IsSuccess => _tag == NoneTag;
 

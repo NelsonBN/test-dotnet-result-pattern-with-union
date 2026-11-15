@@ -35,8 +35,8 @@ public class GettingErrorsValueResultBenchmarks
         _readonlyStruct = ErrorsCount == 1 ? new(errors[0]) : new(errors);
         _class = ErrorsCount == 1 ? new(errors[0]) : new(errors);
         _recordClass = ErrorsCount == 1 ? new(errors[0]) : new(errors);
-        _union = ErrorsCount == 1 ? errors[0] : ResultUnion<FakeModel>.From(errors);
-        _unionNonBoxing = ErrorsCount == 1 ? errors[0] : ResultUnionNonBoxing<FakeModel>.From(errors);
+        _union = ResultUnion<FakeModel>.From(errors);
+        _unionNonBoxing = ResultUnionNonBoxing<FakeModel>.From(errors);
     }
 
     [Benchmark]

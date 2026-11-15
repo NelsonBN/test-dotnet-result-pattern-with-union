@@ -4,13 +4,12 @@ using ResultWithUnion.Common;
 
 namespace ResultWithUnion.VoidBasic;
 
-public union ResultUnion(Error, ImmutableArray<Error>)
+public union ResultUnion(ImmutableArray<Error>)
 {
     public bool IsSuccess => this is null;
 
     public ImmutableArray<Error> Errors => this switch
     {
-        Error error => ImmutableArray.Create(error),
         ImmutableArray<Error> errors => errors.IsDefault ? ImmutableArray<Error>.Empty : errors,
         null => throw new InvalidOperationException("Errors can be retrieved only when the result is an error"),
     };

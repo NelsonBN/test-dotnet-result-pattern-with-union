@@ -31,8 +31,8 @@ public class CreatingErrorVoidResultBenchmarks
     public ResultRecordClass RecordClass_CreateError() => new(_error);
 
     [Benchmark(Baseline = true)]
-    public ResultUnion Union_CreateError() => _error;
+    public ResultUnion Union_CreateError() => ResultUnion.From(_error);
 
     [Benchmark]
-    public ResultUnionNonBoxing UnionNonBoxing_CreateError() => _error;
+    public ResultUnionNonBoxing UnionNonBoxing_CreateError() => ResultUnionNonBoxing.From(_error);
 }

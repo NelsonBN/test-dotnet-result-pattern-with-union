@@ -4,21 +4,20 @@ using ResultWithUnion.Common;
 
 namespace ResultWithUnion.ValueBasic;
 
-// T must not overlap Error or ImmutableArray<Error> (e.g. object) and a null success is read as a failure.
-public union ResultUnion<T>(T, Error, ImmutableArray<Error>)
+// T must not overlap ImmutableArray<Error> (e.g. object) and a null success is read as a failure.
+public union ResultUnion<T>(T, ImmutableArray<Error>)
 {
     public bool IsSuccess => this is T;
 
     public T GetValue() => this switch
     {
         T value => value,
-        Error or ImmutableArray<Error> => throw new InvalidOperationException("Value can be retrieved only when the result is not an error"),
+        ImmutableArray<Error> => throw new InvalidOperationException("Value can be retrieved only when the result is not an error"),
         null => throw new InvalidOperationException("Value can be retrieved only when the result is not an error"),
     };
 
     public ImmutableArray<Error> Errors => this switch
     {
-        Error error => ImmutableArray.Create(error),
         ImmutableArray<Error> errors => errors.IsDefault ? ImmutableArray<Error>.Empty : errors,
         T => throw new InvalidOperationException("Errors can be retrieved only when the result is an error"),
         null => ImmutableArray<Error>.Empty,
