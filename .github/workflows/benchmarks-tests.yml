@@ -58,7 +58,7 @@ jobs:
       run: dotnet build ${{ env.BENCHMARKS_PROJECT }} --configuration Release --no-restore
 
     - name: "Run benchmarks"
-      run: dotnet run --project ${{ env.BENCHMARKS_PROJECT }} --configuration Release --no-build -- --filter '*' --exporters github json
+      run: dotnet run --project ${{ env.BENCHMARKS_PROJECT }} --configuration Release --no-build -- --filter '*' --exporters github json --inProcess
 
     - name: "Build benchmark report"
       if: success()
@@ -69,6 +69,7 @@ jobs:
           echo
           echo "- **Commit:** \`${GITHUB_SHA}\`"
           echo "- **Runner:** \`${RUNNER_OS}/${RUNNER_ARCH}\` (shared GitHub-hosted runner, results are indicative only)"
+          echo "- **Toolchain:** in-process (BenchmarkDotNet 0.15.8 does not support net11 yet, so isolation is reduced)"
           echo
           for file in "${BENCHMARKS_ARTIFACTS}"/results/*-report-github.md; do
             echo "### $(basename "${file}" -report-github.md)"

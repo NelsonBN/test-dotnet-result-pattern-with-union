@@ -87,7 +87,7 @@ dotnet run -c Release --project tests/ResultWithUnion.Benchmarks -- --filter "*"
 dotnet run -c Release --project tests/ResultWithUnion.Benchmarks -- --filter "*" --job short --inProcess
 ```
 
-- **BenchmarkDotNet 0.15.8 does not recognise the net11 runtime moniker**: without `--inProcess` it crashes with `GetRuntimeVersion not implemented for NotRecognized`. Use `--inProcess` (less isolated, so state this caveat next to any numbers) until a BenchmarkDotNet release that supports net11 is referenced.
+- **BenchmarkDotNet 0.15.8 does not recognise the net11 runtime moniker**: without `--inProcess` it crashes with `GetRuntimeVersion not implemented for NotRecognized`. Use `--inProcess` (less isolated, so state this caveat next to any numbers) until a BenchmarkDotNet release that supports net11 is referenced. The GitHub Actions workflow (`.github/workflows/benchmarks-tests.yml`) already passes `--inProcess` for this reason.
 - **Always run benchmarks in `Release`**, without a debugger attached. Debug results are meaningless.
 - BenchmarkDotNet writes reports to `BenchmarkDotNet.Artifacts/` (git-ignored; never commit it).
 - Validate a change with the [`dotnet-code-health`](.claude/skills/dotnet-code-health/SKILL.md) skill (`/dotnet-code-health [all|error|warning|info|deadcode|<code>]`): it scans build errors, warnings and analyzer/style findings, fixes them by severity and prints a report.
