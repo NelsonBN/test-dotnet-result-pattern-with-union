@@ -32,6 +32,20 @@ public struct ResultStruct<TValue>
         IsSuccess = false;
     }
 
+    public bool HasValue => IsSuccess || !_errors.IsDefault;
+
+    public bool TryGetValue(out TValue value)
+    {
+        value = _value!;
+        return IsSuccess;
+    }
+
+    public bool TryGetValue(out ImmutableArray<Error> errors)
+    {
+        errors = _errors.IsDefault ? ImmutableArray<Error>.Empty : _errors;
+        return !IsSuccess;
+    }
+
     public static ResultStruct<TValue> From(Error error) => new(ImmutableArray.Create(error));
 
     public static ResultStruct<TValue> From(Error[] errors) => new(ImmutableArray.Create(errors.AsSpan()));

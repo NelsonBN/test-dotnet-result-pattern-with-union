@@ -25,6 +25,14 @@ public sealed record class ResultRecordClass
         IsSuccess = false;
     }
 
+    public bool HasValue => !IsSuccess;
+
+    public bool TryGetValue(out ImmutableArray<Error> errors)
+    {
+        errors = _errors.IsDefault ? ImmutableArray<Error>.Empty : _errors;
+        return !IsSuccess;
+    }
+
     public static ResultRecordClass From(Error error) => new(ImmutableArray.Create(error));
 
     public static ResultRecordClass From(Error[] errors) => new(ImmutableArray.Create(errors.AsSpan()));

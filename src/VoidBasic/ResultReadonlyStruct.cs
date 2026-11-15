@@ -25,6 +25,14 @@ public readonly struct ResultReadonlyStruct
         IsSuccess = false;
     }
 
+    public bool HasValue => !IsSuccess;
+
+    public bool TryGetValue(out ImmutableArray<Error> errors)
+    {
+        errors = _errors.IsDefault ? ImmutableArray<Error>.Empty : _errors;
+        return !IsSuccess;
+    }
+
     public static ResultReadonlyStruct From(Error error) => new(ImmutableArray.Create(error));
 
     public static ResultReadonlyStruct From(Error[] errors) => new(ImmutableArray.Create(errors.AsSpan()));

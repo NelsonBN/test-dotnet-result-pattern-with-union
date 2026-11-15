@@ -35,6 +35,8 @@ Benchmarks live in `tests/ResultWithUnion.Benchmarks/`, one folder per scenario 
 | create error (value / void) | `Creating/CreatingErrorValueResultBenchmarks`, `Creating/CreatingErrorVoidResultBenchmarks` |
 | errors from each collection type (array, `List`, `ImmutableArray`, `HashSet`, lazy `IEnumerable`) | `Collections/CreatingErrorsFrom<Collection>ValueResultBenchmarks` and `...VoidResultBenchmarks` |
 | implicit conversion from Error, Error[], List<Error>, ReadOnlySpan<Error> (value / void) | `Implicit/ImplicitFrom<Source>ValueResultBenchmarks` and `...VoidResultBenchmarks` |
+| non-throwing read with `TryGetValue` (value, errors with 1 and 5; value / void) | `Reading/TryGetting{Value,ErrorsValue,ErrorsVoid}ResultBenchmarks` (the union uses `is` patterns) |
+| `HasValue` on success and failure (value / void; the union uses `is not null`) | `Checking/CheckingHasValue{Value,Void}ResultBenchmarks` |
 | branch on `if(result.IsSuccess)`, read `Errors` (1 or 5 errors) and `Value`/`GetValue()` | `Checking/CheckingIsSuccess...`, `Reading/GettingErrors...` (value and void) and `Reading/GettingValueResultBenchmarks` |
 
 Closed hierarchies, tuples and exceptions are out of scope.
