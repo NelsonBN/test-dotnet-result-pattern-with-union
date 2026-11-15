@@ -47,7 +47,8 @@ Every feature or fix ships with tests that prove it works and keep it working. W
 - **NEVER** use `[ExcludeFromCodeCoverage]`, coverage excludes, `[Fact(Skip=...)]`, `#if` or test deletion to pass the gate.
 - **NEVER** weaken or delete an assertion to make a test pass; fix the code or the expectation with a reason.
 - **NEVER** retry flaky tests blindly: fix the cause, or tell the user.
-- **NEVER** use `FluentAssertions`, `FluentAssertions.Web` or `Moq`, and **NEVER** add a package or tool beyond the ones listed as base in [references/suggested-tools.md](references/suggested-tools.md) without asking.
+- **NEVER** use a tool from the [tools to never use](references/suggested-tools.md#tools-to-never-use) list.
+- **NEVER** add a tool beyond the base ones in the [tools to use](references/suggested-tools.md#tools-to-use) table without asking.
 - **NEVER** commit or push.
 
 ## Workflow
