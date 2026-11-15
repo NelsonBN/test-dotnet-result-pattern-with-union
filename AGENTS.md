@@ -37,7 +37,7 @@ Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultC
 - **`ResultUnionNonBoxing`**: hand-written union with fields and a tag; same case types, `GetValue()` and `From(...)` as `ResultUnion`, but nothing is boxed.
 - **Union**: exposes `GetValue()` instead of `Value`; created via implicit conversions and `From(...)` instead of constructors; boxes its `ImmutableArray<Error>` case (a 24 B box on every error creation). In the void union, success is `default`, so `default(ResultUnion).IsSuccess` is `true` (the void structs' `default` is a failure).
 - **`readonly struct`**: `IsSuccess` is a `readonly` field (no private setter allowed).
-- **Record struct / record class**: compiler-generated equality, `ToString` and deconstruction are the variation under test.
+- **Record struct / record class**: compiler-generated equality, `ToString` and deconstruction are the variation under test. The synthesized `ToString` reads both `Value` and `Errors`, so it throws for every value result and for a successful void record, by design (accessor guards are not weakened).
 
 ### Union pitfalls
 
