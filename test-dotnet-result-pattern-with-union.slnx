@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ResultWithUnion.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ResultWithUnion.Benchmarks/ResultWithUnion.Benchmarks.csproj" />
+  </Folder>
+</Solution>

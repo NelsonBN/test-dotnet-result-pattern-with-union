@@ -1,0 +1,102 @@
+name: 'Benchmarks Tests'
+
+
+on:
+  workflow_dispatch:
+
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches:
+      - main
+
+
+env:
+  BENCHMARKS_PROJECT: 'tests/ResultWithUnion.Benchmarks'
+  BENCHMARKS_ARTIFACTS: 'BenchmarkDotNet.Artifacts'
+  BENCHMARKS_REPORT: 'benchmark-report.md'
+
+  # Set up the .NET environment to improve performance and reliability
+  DOTNET_CLI_TELEMETRY_OPTOUT: true # Disable .NET CLI telemetry
+  DOTNET_NOLOGO: true # Disable .NET CLI logo
+  DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: true # Enable ANSI color redirection
+  TERM: xterm # Enable ANSI color redirection
+  NUGET_XMLDOC_MODE: skip # Disable NuGet XML documentation generation
+
+
+permissions: {}
+
+
+# Benchmarks are long-running: a new push to the same PR supersedes the previous run
+concurrency:
+  group: benchmarks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+
+jobs:
+
+  run-benchmarks:
+    name: "Run benchmarks"
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+    - name: "Checkout"
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+    - name: "Setup .NET"
+      uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73
+      with:
+        global-json-file: 'global.json'
+
+    - name: "Restore dependencies"
+      run: dotnet restore
+
+    - name: "Build"
+      run: dotnet build ${{ env.BENCHMARKS_PROJECT }} --configuration Release --no-restore
+
+    - name: "Run benchmarks"
+      run: dotnet run --project ${{ env.BENCHMARKS_PROJECT }} --configuration Release --no-build -- --filter '*' --exporters github json
+
+    - name: "Build benchmark report"
+      if: success()
+      shell: bash
+      run: |
+        {
+          echo "## Benchmark results"
+          echo
+          echo "- **Commit:** \`${GITHUB_SHA}\`"
+          echo "- **Runner:** \`${RUNNER_OS}/${RUNNER_ARCH}\` (shared GitHub-hosted runner, results are indicative only)"
+          echo
+          for file in "${BENCHMARKS_ARTIFACTS}"/results/*-report-github.md; do
+            echo "### $(basename "${file}" -report-github.md)"
+            echo
+            cat "${file}"
+            echo
+          done
+        } > "${BENCHMARKS_REPORT}"
+
+    - name: "Publish benchmark summary"
+      if: success()
+      shell: bash
+      run: cat "${BENCHMARKS_REPORT}" >> "${GITHUB_STEP_SUMMARY}"
+
+    # Fork PRs get a read-only token, so they can't comment; they still get the job summary
+    - name: "Add benchmarks in PR Comment"
+      uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88
+      if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+      with:
+        header: benchmark-report
+        path: ${{ env.BENCHMARKS_REPORT }}
+
+    - name: "Upload Benchmark Results"
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      if: always()
+      with:
+        name: 'BenchmarkResults'
+        path: |
+          ${{ env.BENCHMARKS_ARTIFACTS }}/**/*
+          ${{ env.BENCHMARKS_REPORT }}
+        if-no-files-found: error
