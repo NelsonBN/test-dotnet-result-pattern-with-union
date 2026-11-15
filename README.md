@@ -1,0 +1,1 @@
+# test-dotnet-result-pattern-with-union
