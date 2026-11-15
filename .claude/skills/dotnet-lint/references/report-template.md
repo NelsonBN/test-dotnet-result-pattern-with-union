@@ -1,9 +1,9 @@
 # Report Template
 
-Use this layout when `scripts/analyze.ps1 -Report` is unavailable. Write it to `artifacts/code-health/report.md` and print it with `cat` (or `Get-Content`). Keep the section order and titles unchanged.
+Use this layout when `scripts/lint.cs --report` is unavailable. Write it to `artifacts/dotnet-lint/report.md` and print it with `cat`. Keep the section order and titles unchanged.
 
 ````markdown
-# Code health report
+# Lint report
 
 - Date (UTC): <yyyy-MM-dd HH:mm>
 - Branch: <current branch>

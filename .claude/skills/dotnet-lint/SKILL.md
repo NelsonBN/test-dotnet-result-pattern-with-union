@@ -1,12 +1,12 @@
 ---
-name: dotnet-code-health
-description: 'Find and fix .NET build errors, warnings, analyzer findings (CA*), code-style and code-smell suggestions (IDE*, editorconfig) that `dotnet build` alone hides, and detect and remove dead code (unused private members, parameters, usings), with a deterministic scan, severity-ordered fixes, and a final report. Works on-demand (only code changed vs the default branch) or as a command with arguments: /dotnet-code-health [all|error|warning|info|deadcode|<code>]. Use when the user asks to build, validate the build, fix warnings, fix analyzer or style suggestions, clean code smells, remove dead or unused code, improve reliability, or before declaring a change done or ready to commit.'
+name: dotnet-lint
+description: 'Lint a .NET solution end to end: find and fix build errors, warnings, analyzer findings (CA*), code-style and code-smell suggestions (IDE*, editorconfig) that `dotnet build` alone hides, and detect and remove dead code (unused private members, parameters, usings), with a deterministic cross-platform scan, severity-ordered fixes, and a final report. A Stop hook runs the same scan on the uncommitted diff so it can never be skipped. Works on-demand (only code changed vs the default branch) or as a command with arguments: /dotnet-lint [all|error|warning|info|deadcode|<code>]. Use when the user asks to lint, build, validate the build, fix warnings, fix analyzer or style suggestions, clean code smells, remove dead or unused code, improve reliability, or before declaring a change done or ready to commit.'
 argument-hint: '[all|error|warning|info|deadcode|<diagnostic code, e.g. CA2263>]'
 license: MIT
 allowed-tools: Bash
 ---
 
-# .NET Code Health
+# .NET Lint
 
 Scan the solution with a fixed sequence of commands, fix the findings in a fixed order (severity, then criticality), re-scan until clean, and finish with a written report that is printed to the CLI. Never report "build succeeded" without having inspected warnings and info items.
 
@@ -14,7 +14,7 @@ Scan the solution with a fixed sequence of commands, fix the findings in a fixed
 
 - The user asks to build, compile or validate a .NET project, or to fix warnings, analyzer findings, style suggestions or code smells.
 - After finishing a code change, before reporting it as done.
-- The user runs `/dotnet-code-health` (with or without an argument).
+- The user runs `/dotnet-lint` (with or without an argument).
 
 ## When Not to Use
 
@@ -22,27 +22,38 @@ Scan the solution with a fixed sequence of commands, fix the findings in a fixed
 
 ## Prerequisites
 
-- `git` repository, .NET SDK on `PATH` (a `global.json` is optional: if present, the installed SDK must satisfy it; if absent, the newest installed SDK is used), PowerShell for the bundled script: `pwsh` 7+ (Windows, Linux, macOS) or `powershell` 5.1 (built into Windows). Install `pwsh` with `winget install Microsoft.PowerShell` (Windows), `brew install powershell` (macOS) or the [Microsoft package repository](https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-linux) (Linux). With neither shell, use the [fallback sequence](#fallback-without-powershell).
+- `git` repository and a .NET SDK 10 or newer on `PATH` (a `global.json` is optional: if present, the installed SDK must satisfy it; if absent, the newest installed SDK is used). The bundled script is a single-file C# app (`dotnet run <file>.cs`), so it runs the same on Windows, Linux and macOS with no other dependency. With an older SDK, use the [manual fallback sequence](#manual-fallback).
 - Run every command from the repository root.
 - `<skill-dir>` below is the directory containing this `SKILL.md`.
-- `<ps>` below is `pwsh -NoProfile` on any OS, or `powershell -NoProfile -ExecutionPolicy Bypass` on Windows when `pwsh` is missing.
+- `<lint>` below is `dotnet run <skill-dir>/scripts/lint.cs --`.
+
+## Hook enforcement
+
+This skill is the on-demand capability; a `Stop` hook (`.claude/settings.json`, read by Claude Code, VS Code and the Copilot CLI) is the guarantee. When the agent tries to end its turn with uncommitted or untracked `.cs`, project, `.editorconfig`, `global.json` or `nuget.config` changes, the hook runs `<lint> hook stop`:
+
+- It fingerprints the relevant changes. If the fingerprint was already verified clean (by an earlier hook run or by a clean `changed`/`all` run of this skill), it allows the stop without rescanning.
+- Otherwise it runs the `changed` scan against `HEAD` (results in `artifacts/dotnet-lint/hook/`). It only ever judges lines that differ from `HEAD` (uncommitted and untracked changes), never the rest of the solution and never other scopes, even though the script supports them; findings elsewhere are the skill's on-demand job. Any finding (error, warning or info) blocks the stop and hands the findings back to the agent, which then continues this workflow from step 3.
+- After 3 consecutive blocks for the same turn it lets the agent stop and shows a warning, so it can never loop forever; the waiver lasts until the code changes again.
+- `DOTNET_LINT_HOOK=off` disables the hook; it is a no-op outside a git repository.
+
+A clean `changed` or `all` run in step 5 records the verification, so the hook does not scan twice.
 
 ## Arguments and Scope
 
-The scope is chosen once, at the start, and is passed to the script as `-Scope`.
+The scope is chosen once, at the start, and is passed to the script as `--scope`.
 
 | Invocation | Scope | Meaning |
 |------------|-------|---------|
-| `/dotnet-code-health` or on-demand (no slash command) | `changed` | Only findings on lines that differ from the default branch (committed, staged, unstaged and untracked changes) |
-| `/dotnet-code-health all` | `all` | Every finding in the solution, plus the report-only list of unused public/internal symbols |
-| `/dotnet-code-health error` | `error` | Only error-severity findings (whole solution) |
-| `/dotnet-code-health warning` | `warning` | Only warning-severity findings (whole solution) |
-| `/dotnet-code-health info` | `info` | Only info-severity findings (whole solution) |
-| `/dotnet-code-health deadcode` | `deadcode` | Only dead-code diagnostics (whole solution), plus the report-only list of unused public/internal symbols |
-| `/dotnet-code-health CA2263` | `CA2263` | Only that diagnostic code (whole solution) |
+| `/dotnet-lint` or on-demand (no slash command) | `changed` | Only findings on lines that differ from the default branch (committed, staged, unstaged and untracked changes) |
+| `/dotnet-lint all` | `all` | Every finding in the solution, plus the report-only list of unused public/internal symbols |
+| `/dotnet-lint error` | `error` | Only error-severity findings (whole solution) |
+| `/dotnet-lint warning` | `warning` | Only warning-severity findings (whole solution) |
+| `/dotnet-lint info` | `info` | Only info-severity findings (whole solution) |
+| `/dotnet-lint deadcode` | `deadcode` | Only dead-code diagnostics (whole solution), plus the report-only list of unused public/internal symbols |
+| `/dotnet-lint CA2263` | `CA2263` | Only that diagnostic code (whole solution) |
 
 - Argument matching is case-insensitive. Anything else is a usage error: print the table above and stop with a non-zero exit code.
-- The default branch is auto-detected (`origin/HEAD`, then `main`, then `master`). Override it with `-Base <branch>` only if the invocation names another branch.
+- The default branch is auto-detected (`origin/HEAD`, then `main`, then `master`). Override it with `--base <branch>` only if the invocation names another branch.
 - If the current branch is the default branch, `changed` covers only uncommitted work.
 
 ## Core Rules
@@ -73,20 +84,19 @@ Follow these steps in order. Do not skip or reorder them.
 ```bash
 git rev-parse --show-toplevel
 dotnet --version
-pwsh --version
 ```
 
-If `pwsh` is missing, use `powershell` on Windows (see `<ps>`); if no PowerShell is available, switch to the [fallback sequence](#fallback-without-powershell). If `artifacts/` is not git-ignored (the script warns), do not edit `.gitignore`; add the warning to "Decisions needed" in the report.
+If the SDK is older than 10, switch to the [manual fallback sequence](#manual-fallback). If `artifacts/` is not git-ignored (the script warns), do not edit `.gitignore`; add the warning to "Decisions needed" in the report.
 
 ### 2. Analyze (first run)
 
 ```bash
-<ps> -File <skill-dir>/scripts/analyze.ps1 -Scope <scope> -Reset
+dotnet run <skill-dir>/scripts/lint.cs -- --scope <scope> --reset
 ```
 
-`-Reset` starts a new baseline; use it only on this first run of an invocation.
+`--reset` starts a new baseline; use it only on this first run of an invocation.
 
-| Output (under `artifacts/code-health/`) | Content |
+| Output (under `artifacts/dotnet-lint/`) | Content |
 |------------------------------------------|---------|
 | `findings.tsv` | Findings in scope, already de-duplicated and sorted: severity (error, warning, info), then criticality, then code, file and line |
 | `findings-all.tsv` | Every finding regardless of scope |
@@ -130,37 +140,37 @@ Record every test file you added so the report can list it.
 ### 5. Re-scan until clean
 
 ```bash
-<ps> -File <skill-dir>/scripts/analyze.ps1 -Scope <scope>
+dotnet run <skill-dir>/scripts/lint.cs -- --scope <scope>
 ```
 
-Do not pass `-Reset`. Repeat steps 3 to 5 until exit `0`, or until every remaining finding can only be cleared by violating the **NEVER** rules or by an unsafe change (such as a breaking public API) and is listed in the report's "Decisions needed" section.
+Do not pass `--reset`. Repeat steps 3 to 5 until exit `0`, or until every remaining finding can only be cleared by violating the **NEVER** rules or by an unsafe change (such as a breaking public API) and is listed in the report's "Decisions needed" section.
 
 ### 6. Report (always the last step)
 
 ```bash
-<ps> -File <skill-dir>/scripts/analyze.ps1 -Report -Decisions "<item 1>" "<item 2>"
+dotnet run <skill-dir>/scripts/lint.cs -- --report --decisions "<item 1>" "<item 2>"
 ```
 
-The script writes `artifacts/code-health/report.md` and prints its content to the CLI: summary by severity (initial, fixed, remaining, new), dead-code rules not scanned (disabled in `.editorconfig` for at least one file), fixed issues, remaining issues, new issues, files changed, test files touched, and decisions needed. `-Decisions` is optional; use it for abandoned findings and the git-ignore warning.
+The script writes `artifacts/dotnet-lint/report.md` and prints its content to the CLI: summary by severity (initial, fixed, remaining, new), dead-code rules not scanned (disabled in `.editorconfig` for at least one file), fixed issues, remaining issues, new issues, files changed, test files touched, and decisions needed. `--decisions` is optional; use it for abandoned findings and the git-ignore warning.
 
 Finish by stating the outcome (the report path and the counts of fixed and remaining findings). Generic follow-ups, such as building the project and running the tests, are the caller's next steps; do not run or require any other skill for them.
 
-## Fallback without PowerShell
+## Manual fallback
 
-Run the same sequence by hand, from the repository root (shown in POSIX shell syntax; use the equivalent commands in `cmd` on Windows, and write the logs as UTF-8):
+Only for a machine without SDK 10+ (the script cannot run). Run the same sequence by hand, from the repository root (shown in POSIX shell syntax; use the equivalent commands in `cmd` on Windows, and write the logs as UTF-8):
 
 ```bash
-mkdir -p artifacts/code-health
-dotnet build <solution> --no-incremental -nologo -v:minimal > artifacts/code-health/build.log 2>&1
-dotnet format style <solution> --verify-no-changes --severity info --diagnostics IDE0005 IDE0051 IDE0052 IDE0060 --no-restore --verbosity normal > artifacts/code-health/deadcode.log 2>&1
-dotnet format <solution> --verify-no-changes --severity info --no-restore --verbosity normal > artifacts/code-health/format.log 2>&1
+mkdir -p artifacts/dotnet-lint
+dotnet build <solution> --no-incremental -nologo -v:minimal > artifacts/dotnet-lint/build.log 2>&1
+dotnet format style <solution> --verify-no-changes --severity info --diagnostics IDE0005 IDE0051 IDE0052 IDE0060 --no-restore --verbosity normal > artifacts/dotnet-lint/deadcode.log 2>&1
+dotnet format <solution> --verify-no-changes --severity info --no-restore --verbosity normal > artifacts/dotnet-lint/format.log 2>&1
 git merge-base HEAD <base-branch>
 git diff --unified=0 <merge-base>
 git ls-files --others --exclude-standard
 ```
 
-- The dead-code `dotnet format` line only reports the IDE rules that are enabled in `.editorconfig`; it only reports the rules the repo already enables (for example `IDE0060`, which defaults to a suggestion), so it is a partial substitute for the script's dedicated build. Skip Roslynator candidates in this mode.
+- The dead-code `dotnet format` line only reports the IDE rules the repo already enables in `.editorconfig` (for example `IDE0060`, which defaults to a suggestion), so it is a partial substitute for the script's dedicated build. Skip Roslynator candidates in this mode.
 - Diagnostics are the lines matching `<file>(<line>,<col>): error|warning <CODE>: <message> [<project>]`. Format-only findings (not present in the build log) are `info`.
 - De-duplicate by file, line, column and code. Sort by severity, then by the criticality order in [references/severity-order.md](references/severity-order.md).
 - For the `changed` scope keep only findings whose line is inside a `+` hunk of the diff, or in an untracked file.
-- Save the first sorted list as the baseline; at the end, write the report with the layout in [references/report-template.md](references/report-template.md) and print it with `cat artifacts/code-health/report.md`.
+- Save the first sorted list as the baseline; at the end, write the report with the layout in [references/report-template.md](references/report-template.md) and print it with `cat artifacts/dotnet-lint/report.md`.

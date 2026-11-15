@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dotnet run .claude/skills/dotnet-lint/scripts/lint.cs -- hook stop",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
+  }
+}

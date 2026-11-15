@@ -1,6 +1,6 @@
 # Fix Order
 
-Findings are fixed by severity first (`error`, `warning`, `info`), then by category rank (lower first), then by code, file and line. `scripts/analyze.ps1` (`$CategoryRules`) is the source of truth; keep this table in sync with it.
+Findings are fixed by severity first (`error`, `warning`, `info`), then by category rank (lower first), then by code, file and line. `scripts/lint.cs` (`CategoryRules`) is the source of truth; keep this table in sync with it.
 
 | Rank | Category | Codes | Why this position |
 |------|----------|-------|-------------------|
