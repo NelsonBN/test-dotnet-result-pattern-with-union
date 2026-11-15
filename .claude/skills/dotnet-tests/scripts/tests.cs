@@ -28,7 +28,7 @@ return TestRunner.Run(args);
 
 sealed class ToolException(string message) : Exception(message);
 
-sealed record Gate(double LineCoverage, double BranchCoverage, double MutationScore, string UnitSuffix, string IntegrationSuffix, string IntegrationTrait, string[] StructureIgnore);
+sealed record Gate(double LineCoverage, double BranchCoverage, double MutationScore, string UnitSuffix, string IntegrationSuffix, string IntegrationTrait, string[] StructureIgnore, string[] MutationIgnore);
 
 sealed record FileCoverage(string File, int Lines, int LinesCovered, int Branches, int BranchesCovered, List<int> Uncovered)
 {
@@ -116,7 +116,23 @@ static class TestRunner
             r.GetProperty("unitSuffix").GetString() ?? ".Tests",
             r.GetProperty("integrationSuffix").GetString() ?? ".IntegrationTests",
             r.GetProperty("integrationTrait").GetString() ?? "Integration",
-            r.GetProperty("structureIgnore").EnumerateArray().Select(e => e.GetString() ?? "").ToArray());
+            r.GetProperty("structureIgnore").EnumerateArray().Select(e => e.GetString() ?? "").ToArray(),
+            LoadMutationIgnore());
+    }
+
+    // Optional per-repository list of source project names (without extension) that mutation testing skips.
+    static string[] LoadMutationIgnore()
+    {
+        const string path = ".config/dotnet-tests.json";
+        if (!File.Exists(path))
+        {
+            return [];
+        }
+
+        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        return document.RootElement.TryGetProperty("mutationIgnore", out var ignored)
+            ? ignored.EnumerateArray().Select(e => e.GetString() ?? "").ToArray()
+            : [];
     }
 
     static string DefaultBase()
@@ -608,6 +624,13 @@ static class TestRunner
         var reports = new List<string>();
         foreach (var project in projects)
         {
+            var ignored = gate.MutationIgnore.Contains(Path.GetFileNameWithoutExtension(project)[..^gate.UnitSuffix.Length], StringComparer.OrdinalIgnoreCase);
+            if (ignored)
+            {
+                Out.WriteLine($"SKIP {Path.GetFileNameWithoutExtension(project)} (listed in mutationIgnore of .config/dotnet-tests.json)");
+                continue;
+            }
+
             var source = Path.GetFileNameWithoutExtension(project)[..^gate.UnitSuffix.Length] + ".csproj";
             var outDir = Path.GetFullPath($"{StateDir}/mutation/{Path.GetFileNameWithoutExtension(source)}");
             reports.Add(Path.Combine(outDir, "reports", "mutation-report.json"));

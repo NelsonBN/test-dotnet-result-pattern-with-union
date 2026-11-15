@@ -61,9 +61,31 @@ Pass only when every changed file meets line, branch **and** mutation gates.
 
 1. Read each line of the "Surviving mutants" list: the file, the line, the mutation and its replacement (`price > 100` became `price >= 100`).
 2. Add or tighten a test with an input that tells the original from the mutant: boundary values (100 and 101), the exact expected value instead of `BeGreaterThan(0)`, the negative path, an argument check where the interaction is the contract.
-3. Re-run `quality` until the files pass.
+3. Re-run `quality` and repeat; the loop and its stop rules are in the next section.
 
 Typical causes: boundary not tested, assertion too weak (`NotBeNull`, `BeGreaterThan(0)`), `Arg.Any` hiding an argument, missing negative case, result ignored.
+
+## The improve loop: kill as many survivors as possible, then stop
+
+The agent owns this loop. After every `mutation` or `quality` run, read the survivors in the report, strengthen or add tests, and run again. Keep going while rounds still pay off, and stop deliberately instead of looping forever.
+
+Per round:
+
+1. Triage every survivor: **killable** (a test input or a stronger assertion separates it from the original), **equivalent** (no observable change) or **not worth it** (see below).
+2. Kill the killable ones, the *covered but not verified* ones first, then the *not covered* ones.
+3. Re-run and compare the survivor count and the score with the previous round.
+
+Stop when any of these holds:
+
+- Every changed file meets the mutation gate **and** the remaining survivors are all triaged as equivalent or not worth it.
+- A round kills nothing new (no progress), or two rounds in a row raise the score by only a negligible amount.
+- A survivor would need a test that is contorted, brittle, tied to implementation details, or asserts something no caller can observe (logging text, cache hints, defensive code that cannot be reached, compiler-generated or tooling-forced code).
+- The tool, not the tests, is the blocker (Stryker cannot parse or compile the code, test server failures): do not retry blindly; report it.
+- A hard cap of **5 rounds** per run is reached. After that, report the state and let the user decide.
+
+When stopping with survivors left, list each one in the report's "Decisions needed" with file, line, mutation and the reason it was left (equivalent, not worth it, tool limit). Never lower the threshold, exclude files or mutators, or weaken assertions to end the loop.
+
+A repository can opt a source project out of mutation runs that its tool cannot handle by listing its name (without extension) in `.config/dotnet-tools.json` as `{ "mutationIgnore": ["<SourceProject>"] }` (ask the user first, state the reason in the report); `mutation` then prints `SKIP` for it.
 
 ## Equivalent mutants
 

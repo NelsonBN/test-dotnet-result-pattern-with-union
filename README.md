@@ -51,7 +51,7 @@ dotnet run .claude/skills/dotnet-tests/scripts/tests.cs -- coverage
 dotnet run .claude/skills/dotnet-tests/scripts/tests.cs -- mutation
 ```
 
-The tests are characterization tests of existing behaviour; Stryker.NET mutation runs prove they can fail (about 97% mutation score for the five non-union variants, about 95% for `ResultUnionCustom`). Line and branch coverage is 100% for every source file. Stryker cannot mutate `ResultUnion` (declared `union` syntax), so that project is covered by the coverage gate only.
+The tests are characterization tests of existing behaviour; Stryker.NET mutation runs prove they can fail (about 97% mutation score for the five non-union variants, about 95% for `ResultUnionCustom`). Line and branch coverage is 100% for every source file. Stryker.NET 5.1.0 (the newest release) cannot mutate `ResultUnion`: its bundled Roslyn does not parse the `union` declaration (it reads the members as top-level statements, the mutated copy fails to compile and Stryker crashes in its rollback code with `ArgumentOutOfRangeException`). That project is therefore ignored for mutation testing for now (`mutationIgnore` in `.config/dotnet-tests.json`, skipped in `mutation-tests.bat`/`.sh`); it is covered by the 100% line and branch gate only. Revisit when Stryker supports C# 15 unions.
 
 ## Running the benchmarks
 

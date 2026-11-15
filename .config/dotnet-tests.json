@@ -1,0 +1,3 @@
+{
+  "mutationIgnore": ["ResultUnion"]
+}
