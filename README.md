@@ -6,28 +6,28 @@ The question: *does a C# 15 `union` make a better Result type than the existing 
 
 ## Fair comparison
 
-The non-union variants (struct, readonly struct, record struct, class, record class) follow one nearly identical implementation: the same members, constructor overloads, storage (`ImmutableArray<Error>`), exceptions and benchmark inputs. The **union is the only variant allowed to differ** (the language does not let it declare fields, `Value` or constructors), while the hand-written non-boxing `ResultUnionCustom` is the **baseline** of every benchmark, so `Ratio` reads "variant vs custom union". The unavoidable differences are listed in `AGENTS.md` under *Intentional deviations*.
+The non-union variants (struct, readonly struct, record struct, class, record class) follow one nearly identical implementation: the same members, constructor overloads, storage (`ImmutableArray<Error>`), exceptions and benchmark inputs. The **union is the only variant allowed to differ** (the language does not let it declare fields, `Value` or constructors), while the hand-written non-boxing `ResultUnionCustom` project is the **baseline** of every benchmark, so `Ratio` reads "variant vs custom union". The unavoidable differences are listed in `AGENTS.md` under *Intentional deviations*.
 
 ## Variants
 
-Each variant exists as a value result (`src/ValueBasic/`, `Result<Variant><TValue>`) and a void result (`src/VoidBasic/`, `Result<Variant>`). All use the shared `Error` in `src/Common`.
+Each variant is its own project `src/Result<Variant>/` (namespace `Result<Variant>`) with the same type names in every project, both in the project root: `ValueResult<TValue>` (`ValueResult.cs`) and `VoidResult` (`VoidResult.cs`). Each project also carries its own copy of `Error` and `ErrorCollection` (no shared project), so `ResultStruct.Error` and `ResultClass.Error` are different types.
 
 | Variant | Types |
 |---------|-------|
 | struct, readonly struct, record struct | `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct` |
 | sealed class, sealed record class | `ResultClass`, `ResultRecordClass` |
-| C# 15 union | `union ResultUnion<T>(T, ImmutableArray<Error>)` / `union ResultUnion(ImmutableArray<Error>)` |
-| C# 15 union, non-boxing | hand-written `[Union]` readonly struct `ResultUnionCustom<T>` / `ResultUnionCustom` with real fields, `HasValue` and `TryGetValue` (benchmarked as `UnionCustom_*`) |
+| C# 15 union | `union ValueResult<T>(T, ImmutableArray<Error>)` / `union VoidResult(ImmutableArray<Error>)` |
+| C# 15 union, non-boxing | hand-written `[Union]` readonly struct `ValueResult<T>` / `VoidResult` in `ResultUnionCustom` with real fields, `HasValue` and `TryGetValue` (benchmarked as `UnionCustom_*`) |
 
 The declared `union` boxes its `ImmutableArray<Error>` case into one `object?` field: with 5 errors it allocates 88 B versus 64 B for the structs (24 B box). A single `Error` is created with `From(error)`. The non-boxing variant exists to measure how much of that gap the boxing explains.
 
 Failed results accept a single `Error` or a collection of errors: `Error[]`, `List<Error>`, `ImmutableArray<Error>`, `ReadOnlySpan<Error>` and any `IEnumerable<Error>` (sets, queues, lazy sequences; dictionaries are not supported). The errors are copied once into an immutable array. Every variant (including both unions) offers the same API: constructors only for the success value and an `ImmutableArray<Error>`, and `From(...)` factories for everything else. Each factory except `IEnumerable<Error>` (C# forbids conversions from an interface) also has an `implicit operator` twin that calls it, so `ResultX r = error;` works on every variant.
 
-**Union limitation:** `ResultUnion<T>` cannot represent a `T` that overlaps `ImmutableArray<Error>` (such as `object`), nor a `null` success value; the non-union value results accept both. The comparison covers non-null, non-overlapping payloads.
+**Union limitation:** `ResultUnion.ValueResult<T>` cannot represent a `T` that overlaps `ImmutableArray<Error>` (such as `object`), nor a `null` success value; the non-union value results accept both. The comparison covers non-null, non-overlapping payloads.
 
 ## Benchmarks
 
-Benchmarks live in `tests/ResultWithUnion.Benchmarks/`, one folder per scenario with the value and void classes side by side:
+Benchmarks live in the single project `tests/Result.Benchmarks/` (it references every variant project and builds one `Error` input per variant), one folder per scenario with the value and void classes side by side:
 
 | Scenario | Classes |
 |----------|---------|
@@ -45,7 +45,7 @@ Closed hierarchies, tuples and exceptions are out of scope.
 
 ```bash
 dotnet build
-dotnet run -c Release --project tests/ResultWithUnion.Benchmarks -- --filter "*CreatingValueResult*" --job short --inProcess
+dotnet run -c Release --project tests/Result.Benchmarks -- --filter "*CreatingValueResult*" --job short --inProcess
 ```
 
 BenchmarkDotNet 0.15.8 does not recognise the net11 runtime, so `--inProcess` is currently required (the GitHub Actions workflow uses it too). See `AGENTS.md` for the full conventions.

@@ -1,0 +1,55 @@
+﻿using System.Collections.Generic;
+using System.Linq;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Order;
+
+namespace Result.Benchmarks.Tests;
+
+[MemoryDiagnoser]
+[Orderer(SummaryOrderPolicy.FastestToSlowest)]
+[RankColumn]
+public class CreatingErrorsFromLazyVoidResultBenchmarks
+{
+    private const int ErrorsCount = 5;
+
+    private IEnumerable<ResultRecordStruct.Error> _errorsRecordStruct = default!;
+    private IEnumerable<ResultStruct.Error> _errorsStruct = default!;
+    private IEnumerable<ResultReadonlyStruct.Error> _errorsReadonlyStruct = default!;
+    private IEnumerable<ResultClass.Error> _errorsClass = default!;
+    private IEnumerable<ResultRecordClass.Error> _errorsRecordClass = default!;
+    private IEnumerable<ResultUnion.Error> _errorsUnion = default!;
+    private IEnumerable<ResultUnionCustom.Error> _errorsUnionCustom = default!;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        _errorsRecordStruct = Enumerable.Range(1, ErrorsCount).Select(static index => new ResultRecordStruct.Error($"fake{index}")).ToArray().Where(static _ => true);
+        _errorsStruct = Enumerable.Range(1, ErrorsCount).Select(static index => new ResultStruct.Error($"fake{index}")).ToArray().Where(static _ => true);
+        _errorsReadonlyStruct = Enumerable.Range(1, ErrorsCount).Select(static index => new ResultReadonlyStruct.Error($"fake{index}")).ToArray().Where(static _ => true);
+        _errorsClass = Enumerable.Range(1, ErrorsCount).Select(static index => new ResultClass.Error($"fake{index}")).ToArray().Where(static _ => true);
+        _errorsRecordClass = Enumerable.Range(1, ErrorsCount).Select(static index => new ResultRecordClass.Error($"fake{index}")).ToArray().Where(static _ => true);
+        _errorsUnion = Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnion.Error($"fake{index}")).ToArray().Where(static _ => true);
+        _errorsUnionCustom = Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustom.Error($"fake{index}")).ToArray().Where(static _ => true);
+    }
+
+    [Benchmark]
+    public ResultRecordStruct.VoidResult RecordStruct_CreateErrors() => ResultRecordStruct.VoidResult.From(_errorsRecordStruct);
+
+    [Benchmark]
+    public ResultStruct.VoidResult Struct_CreateErrors() => ResultStruct.VoidResult.From(_errorsStruct);
+
+    [Benchmark]
+    public ResultReadonlyStruct.VoidResult ReadonlyStruct_CreateErrors() => ResultReadonlyStruct.VoidResult.From(_errorsReadonlyStruct);
+
+    [Benchmark]
+    public ResultClass.VoidResult Class_CreateErrors() => ResultClass.VoidResult.From(_errorsClass);
+
+    [Benchmark]
+    public ResultRecordClass.VoidResult RecordClass_CreateErrors() => ResultRecordClass.VoidResult.From(_errorsRecordClass);
+
+    [Benchmark]
+    public ResultUnion.VoidResult Union_CreateErrors() => ResultUnion.VoidResult.From(_errorsUnion);
+
+    [Benchmark(Baseline = true)]
+    public ResultUnionCustom.VoidResult UnionCustom_CreateErrors() => ResultUnionCustom.VoidResult.From(_errorsUnionCustom);
+}

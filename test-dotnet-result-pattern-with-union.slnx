@@ -1,8 +1,14 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/ResultWithUnion.csproj" />
+    <Project Path="src/ResultClass/ResultClass.csproj" />
+    <Project Path="src/ResultRecordClass/ResultRecordClass.csproj" />
+    <Project Path="src/ResultStruct/ResultStruct.csproj" />
+    <Project Path="src/ResultReadonlyStruct/ResultReadonlyStruct.csproj" />
+    <Project Path="src/ResultRecordStruct/ResultRecordStruct.csproj" />
+    <Project Path="src/ResultUnion/ResultUnion.csproj" />
+    <Project Path="src/ResultUnionCustom/ResultUnionCustom.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/ResultWithUnion.Benchmarks/ResultWithUnion.Benchmarks.csproj" />
+    <Project Path="tests/Result.Benchmarks/Result.Benchmarks.csproj" />
   </Folder>
 </Solution>

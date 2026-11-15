@@ -11,7 +11,7 @@ on:
 
 
 env:
-  BENCHMARKS_PROJECT: 'tests/ResultWithUnion.Benchmarks'
+  BENCHMARKS_PROJECT: 'tests/Result.Benchmarks'
   BENCHMARKS_ARTIFACTS: 'BenchmarkDotNet.Artifacts'
 
   # Set up the .NET environment to improve performance and reliability

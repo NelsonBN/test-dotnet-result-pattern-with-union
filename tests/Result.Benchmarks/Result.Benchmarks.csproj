@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+
+    <RootNamespace>Result.Benchmarks</RootNamespace>
+    <AssemblyName>Result.Benchmarks</AssemblyName>
+
+    <IsPackable>false</IsPackable>
+
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ResultClass\ResultClass.csproj" />
+    <ProjectReference Include="..\..\src\ResultRecordClass\ResultRecordClass.csproj" />
+    <ProjectReference Include="..\..\src\ResultStruct\ResultStruct.csproj" />
+    <ProjectReference Include="..\..\src\ResultReadonlyStruct\ResultReadonlyStruct.csproj" />
+    <ProjectReference Include="..\..\src\ResultRecordStruct\ResultRecordStruct.csproj" />
+    <ProjectReference Include="..\..\src\ResultUnion\ResultUnion.csproj" />
+    <ProjectReference Include="..\..\src\ResultUnionCustom\ResultUnionCustom.csproj" />
+  </ItemGroup>
+
+</Project>
