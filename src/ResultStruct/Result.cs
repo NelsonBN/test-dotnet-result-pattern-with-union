@@ -31,7 +31,7 @@ public struct Result<TValue>
         IsSuccess = false;
     }
 
-    public bool HasValue => IsSuccess || !_errors.IsDefault;
+    public bool HasValue => true;
 
     public bool TryGetValue(out TValue value)
     {
