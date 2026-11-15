@@ -156,9 +156,12 @@ dotnet_style_allow_multiple_blank_lines_experimental = true
 dotnet_style_allow_statement_immediately_after_block_experimental = true
 
 
-dotnet_diagnostic.CS8019.severity = warning # (unused directives) Who the compiler handles unused usings
-dotnet_diagnostic.IDE0005.severity = warning # (unused directives) Who the IDE handles unused usings
-dotnet_diagnostic.CS1591.severity = none # Disable: Missing XML comment for publicly visible type or member
+# (unused directives) How the compiler handles unused usings
+dotnet_diagnostic.CS8019.severity = warning
+# (unused directives) How the IDE handles unused usings
+dotnet_diagnostic.IDE0005.severity = warning
+# Disable: Missing XML comment for publicly visible type or member
+dotnet_diagnostic.CS1591.severity = none
 
 
 ###############################
