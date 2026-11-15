@@ -35,36 +35,31 @@ public class TryGettingValueResultBenchmarks
     [Benchmark]
     public FakeModel RecordStruct_TryGetValue()
     {
-        _recordStruct.TryGetValue(out FakeModel value);
-        return value;
+        return _recordStruct.TryGetValue(out FakeModel value) ? value : default!;
     }
 
     [Benchmark]
     public FakeModel Struct_TryGetValue()
     {
-        _struct.TryGetValue(out FakeModel value);
-        return value;
+        return _struct.TryGetValue(out FakeModel value) ? value : default!;
     }
 
     [Benchmark]
     public FakeModel ReadonlyStruct_TryGetValue()
     {
-        _readonlyStruct.TryGetValue(out FakeModel value);
-        return value;
+        return _readonlyStruct.TryGetValue(out FakeModel value) ? value : default!;
     }
 
     [Benchmark]
     public FakeModel Class_TryGetValue()
     {
-        _class.TryGetValue(out FakeModel value);
-        return value;
+        return _class.TryGetValue(out FakeModel value) ? value : default!;
     }
 
     [Benchmark]
     public FakeModel RecordClass_TryGetValue()
     {
-        _recordClass.TryGetValue(out FakeModel value);
-        return value;
+        return _recordClass.TryGetValue(out FakeModel value) ? value : default!;
     }
 
     [Benchmark]
@@ -76,7 +71,6 @@ public class TryGettingValueResultBenchmarks
     [Benchmark(Baseline = true)]
     public FakeModel UnionCustom_TryGetValue()
     {
-        _unionCustom.TryGetValue(out FakeModel value);
-        return value;
+        return _unionCustom.TryGetValue(out FakeModel value) ? value : default!;
     }
 }

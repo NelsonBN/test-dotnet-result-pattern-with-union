@@ -45,36 +45,31 @@ public class TryGettingErrorsVoidResultBenchmarks
     [Benchmark]
     public ImmutableArray<ResultRecordStruct.Error> RecordStruct_TryGetErrors()
     {
-        _recordStruct.TryGetValue(out ImmutableArray<ResultRecordStruct.Error> errors);
-        return errors;
+        return _recordStruct.TryGetValue(out ImmutableArray<ResultRecordStruct.Error> errors) ? errors : default;
     }
 
     [Benchmark]
     public ImmutableArray<ResultStruct.Error> Struct_TryGetErrors()
     {
-        _struct.TryGetValue(out ImmutableArray<ResultStruct.Error> errors);
-        return errors;
+        return _struct.TryGetValue(out ImmutableArray<ResultStruct.Error> errors) ? errors : default;
     }
 
     [Benchmark]
     public ImmutableArray<ResultReadonlyStruct.Error> ReadonlyStruct_TryGetErrors()
     {
-        _readonlyStruct.TryGetValue(out ImmutableArray<ResultReadonlyStruct.Error> errors);
-        return errors;
+        return _readonlyStruct.TryGetValue(out ImmutableArray<ResultReadonlyStruct.Error> errors) ? errors : default;
     }
 
     [Benchmark]
     public ImmutableArray<ResultClass.Error> Class_TryGetErrors()
     {
-        _class.TryGetValue(out ImmutableArray<ResultClass.Error> errors);
-        return errors;
+        return _class.TryGetValue(out ImmutableArray<ResultClass.Error> errors) ? errors : default;
     }
 
     [Benchmark]
     public ImmutableArray<ResultRecordClass.Error> RecordClass_TryGetErrors()
     {
-        _recordClass.TryGetValue(out ImmutableArray<ResultRecordClass.Error> errors);
-        return errors;
+        return _recordClass.TryGetValue(out ImmutableArray<ResultRecordClass.Error> errors) ? errors : default;
     }
 
     [Benchmark]
@@ -86,7 +81,6 @@ public class TryGettingErrorsVoidResultBenchmarks
     [Benchmark(Baseline = true)]
     public ImmutableArray<ResultUnionCustom.Error> UnionCustom_TryGetErrors()
     {
-        _unionCustom.TryGetValue(out ImmutableArray<ResultUnionCustom.Error> errors);
-        return errors;
+        return _unionCustom.TryGetValue(out ImmutableArray<ResultUnionCustom.Error> errors) ? errors : default;
     }
 }
