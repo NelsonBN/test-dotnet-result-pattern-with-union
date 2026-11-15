@@ -16,6 +16,7 @@ Stored in [../quality-gate.json](../quality-gate.json); never lowered without th
 ## Definition of done
 
 - [ ] Mirror structure holds (`tests.cs structure` passes): a `<P>.Tests` project per source project, a `<Name>Tests.cs` per source file, `<P>.IntegrationTests` for web/API projects.
+- [ ] Test first: every fix and change started with a test seen failing (red) for the reported reason, then passing (green) after the fix, with the evidence quoted in the reply ([tdd-bug-workflow.md](tdd-bug-workflow.md)).
 - [ ] Every new or changed behaviour has a test; bug fixes have a regression test that failed before the fix.
 - [ ] Tests follow AAA and Given_When_Then, one behaviour each, AwesomeAssertions only.
 - [ ] Unit tests are fast and deterministic; integration tests only where needed and tagged.

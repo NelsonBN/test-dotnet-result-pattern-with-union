@@ -4,6 +4,7 @@ Write them only when they add proof a unit test cannot give. Narrow means one re
 
 ## When they make sense
 
+- A bug that only reproduces at a real boundary: the failing reproduction is then an integration test, written first like any other (see [tdd-bug-workflow.md](tdd-bug-workflow.md)).
 - Data access: real SQL, mappings, migrations, constraints, transactions.
 - HTTP pipeline: routing, model binding, validation, auth, serialization, status codes and problem details.
 - Messaging, caching or file formats where behaviour lives in the integration itself.

@@ -67,7 +67,7 @@ Inject `TimeProvider` (use `FakeTimeProvider` when approved, see [suggested-tool
 
 ## What to cover per feature
 
-Happy path, each boundary (min, max, off-by-one), null/empty/whitespace, invalid state, each failure path and its message or error type, idempotency, and (when relevant) concurrency and cancellation. Bug fix: a test that fails on the old code, named after the bug's behaviour.
+Happy path, each boundary (min, max, off-by-one), null/empty/whitespace, invalid state, each failure path and its message or error type, idempotency, and (when relevant) concurrency and cancellation. Bug fix: a test that fails on the old code, written and seen failing before the fix ([tdd-bug-workflow.md](tdd-bug-workflow.md)), named after the bug's behaviour.
 
 ## Isolation
 

@@ -92,4 +92,5 @@ One class per scenario in `tests/Result.Benchmarks/` grouped in one folder per s
 - **NEVER** commit without human review; ask first. Commits are atomic Conventional Commits via the [`git-commit`](.claude/skills/git-commit/SKILL.md) skill.
 - **ALWAYS** build with zero warnings and run the affected benchmark with `--job short` before declaring work done.
 - **NEVER** commit `BenchmarkDotNet.Artifacts/`, `bin/`, `obj/` or secrets.
+- **ALWAYS** test first (TDD) when an AI fixes or changes anything, whatever the source (ticket, review comment, instruction, debug finding): write the test that reproduces it, watch it fail (red), fix, watch the same test pass (green), then refactor. Never fix first and test afterwards; if it cannot be reproduced with a test, stop and ask. See the [`dotnet-tests`](.claude/skills/dotnet-tests/references/tdd-bug-workflow.md) skill.
 - Update this file and `README.md` when variants, scenarios, conventions or conclusions change.
