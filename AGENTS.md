@@ -23,18 +23,18 @@ An experiment, not a library: compares the **Result pattern** built the classic 
 
 Each variant exists as a value result `Result<Variant><TValue>` in `src/ValueBasic/` and a void result `Result<Variant>` in `src/VoidBasic/`: one type per file, file-scoped namespace `ResultWithUnion.ValueBasic` / `ResultWithUnion.VoidBasic`.
 
-Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultClass` (sealed), `ResultRecordClass` (sealed), and `ResultUnion` (`union ResultUnion<T>(T, ImmutableArray<Error>)` / `union ResultUnion(ImmutableArray<Error>)`). A second union, `ResultUnionNonBoxing` (hand-written `[Union]` readonly struct with `HasValue`/`TryGetValue`, benchmarked as `UnionNonBoxing_*`), measures the cost of boxing; `Union_*` stays the only baseline.
+Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultClass` (sealed), `ResultRecordClass` (sealed), and `ResultUnion` (`union ResultUnion<T>(T, ImmutableArray<Error>)` / `union ResultUnion(ImmutableArray<Error>)`). A second union, `ResultUnionCustom` (hand-written `[Union]` readonly struct with `HasValue`/`TryGetValue`, benchmarked as `UnionCustom_*`), measures the cost of boxing; `Union_*` stays the only baseline.
 
 - Out of scope, do not add: closed hierarchies, tuples, exceptions.
 - All variants share `src/Common/Error.cs`.
 - API: `IsSuccess`, `Value` (value results), `Errors`; `Value`/`Errors` throw `InvalidOperationException` in the wrong state.
-- Class/struct constructors: `(TValue)` / `()` for success, plus `(ImmutableArray<Error>)` (zero copy), `(Error[])`, `(List<Error>)`, `(IEnumerable<Error>)`, `(params ReadOnlySpan<Error>)`. A single `Error` is created with the static `From(Error)` factory (in every variant, including the non-boxing union), not a constructor. Dictionaries are unsupported by design. Every overload copies its input once.
+- Same API in every variant: constructors `(TValue)` / `()` for success and `(ImmutableArray<Error>)` (zero copy) only; every other failure input goes through static factories `From(Error)`, `From(Error[])`, `From(List<Error>)`, `From(IEnumerable<Error>)`, `From(params ReadOnlySpan<Error>)` (also on both unions). Dictionaries are unsupported by design. Every overload copies its input once.
 - Only the `IEnumerable<Error>` path uses `src/Common/ErrorCollection.cs`; do not duplicate it. All others call `ImmutableArray.Create(...)` directly.
-- The union offers `From(...)` static overloads for `Error[]`, `List<Error>`, `IEnumerable<Error>` and `params ReadOnlySpan<Error>`; the value and `ImmutableArray<Error>` convert implicitly; a single `Error` goes through `From(error)`.
+- The union has no constructors; the value and `ImmutableArray<Error>` convert implicitly instead, and it offers the same `From(...)` factories.
 
 ### Intentional deviations (the only allowed ones)
 
-- **`ResultUnionNonBoxing`**: hand-written union with fields and a tag; same case types, `GetValue()` and `From(...)` as `ResultUnion`, but nothing is boxed.
+- **`ResultUnionCustom`**: hand-written union with fields; same case types, `GetValue()` and `From(...)` as `ResultUnion`, but nothing is boxed.
 - **Union**: exposes `GetValue()` instead of `Value`; created via implicit conversions and `From(...)` instead of constructors; boxes its `ImmutableArray<Error>` case (a 24 B box on every error creation). In the void union, success is `default`, so `default(ResultUnion).IsSuccess` is `true` (the void structs' `default` is a failure).
 - **`readonly struct`**: `IsSuccess` is a `readonly` field (no private setter allowed).
 - **Record struct / record class**: compiler-generated equality, `ToString` and deconstruction are the variation under test. The synthesized `ToString` reads both `Value` and `Errors`, so it throws for every value result and for a successful void record, by design (accessor guards are not weakened).
@@ -68,7 +68,7 @@ dotnet run -c Release --project tests/ResultWithUnion.Benchmarks -- --filter "*C
 
 ## Benchmark Conventions
 
-One class per scenario in `tests/ResultWithUnion.Benchmarks/` (`ValueBasic/`, `VoidBasic/`, plus `Collections/` subfolders), namespace `ResultWithUnion.Benchmarks.Tests`, fakes in `FakeModel.cs`. `Program.cs` uses `BenchmarkSwitcher`, so select scenarios with `--filter`.
+One class per scenario in `tests/ResultWithUnion.Benchmarks/` grouped in one folder per scenario (`Creating/`, `Collections/`, `Reading/`, `Checking/`), value and void side by side, namespace `ResultWithUnion.Benchmarks.Tests`, fakes in `FakeModel.cs`. `Program.cs` uses `BenchmarkSwitcher`, so select scenarios with `--filter`.
 
 - Classes are named `<Scenario>Benchmarks`, methods `<Variant>_<Action>` (`RecordStruct`, `Struct`, `ReadonlyStruct`, `Class`, `RecordClass`, `Union`).
 - `[MemoryDiagnoser]` is mandatory; also `[RankColumn]` and `[Orderer(SummaryOrderPolicy.FastestToSlowest)]`.
