@@ -67,6 +67,7 @@ dotnet run -c Release --project tests/Result.Benchmarks -- --filter "*CreatingVa
 - BenchmarkDotNet 0.15.8 does not recognise the net11 moniker: always pass `--inProcess` (also used by CI) and state that caveat next to any numbers.
 - Always run benchmarks in `Release` without a debugger; `--job short` is a smoke run, not for published numbers.
 - Validate with the [`dotnet-lint`](.claude/skills/dotnet-lint/SKILL.md) skill (on demand: `dotnet run .claude/skills/dotnet-lint/scripts/lint.cs -- --scope changed --reset`; cross-platform, needs only the .NET SDK).
+- Tests (if a test project is ever added) follow the [`dotnet-tests`](.claude/skills/dotnet-tests/SKILL.md) skill; its Stop hook (also in `.claude/settings.json`) is a no-op while the repo has no test project, and `DOTNET_TESTS_HOOK=off` disables it.
 - A `Stop` hook in [`.claude/settings.json`](.claude/settings.json) (read by Claude Code, VS Code and the Copilot CLI) runs that scan whenever code changed and blocks ending the turn while the lines that differ from `HEAD` have any finding (the hook never checks other code) (after 3 consecutive blocks it lets the agent stop with a warning). `DOTNET_LINT_HOOK=off` disables it.
 
 ## Benchmark Conventions

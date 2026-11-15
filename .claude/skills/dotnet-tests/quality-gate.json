@@ -1,0 +1,7 @@
+{
+  "lineCoverage": 90,
+  "branchCoverage": 85,
+  "mutationScore": 80,
+  "testProjectPattern": "*Tests*.csproj",
+  "integrationTrait": "Integration"
+}
