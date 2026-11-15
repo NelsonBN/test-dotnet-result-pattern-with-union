@@ -13,6 +13,7 @@ An experiment, not a library: compares the **Result pattern** built the classic 
 >
 > - The **union is the only variant allowed to look different** (it cannot declare fields, a `Value` member or constructors) and it is the **benchmark baseline** (`Union_*`, so `Ratio` reads "variant vs union").
 > - The other five variants must be **near-identical**: same fields, members, constructor overloads and order, parameter names, exceptions and messages, nullability, statement style. Diffing any two must show only the type declaration and what the language forces. Start a new variant by copying an existing one.
+> - **Most similar API possible across all variants, unions included**: the same constructors (only where the language allows them), the same `From(...)` factory overloads, the same member names, parameter names and signatures. A new member or overload is added to every variant at once; the union differs only where the language forces it (for example `GetValue()` instead of `Value`, implicit conversions instead of constructors). Prefer changing the union's API toward the others, and the others toward the union, over letting them drift apart.
 > - **Same storage and semantics**: `ImmutableArray<Error>` errors, same wrong-state behaviour, no validation.
 > - **Same work in benchmarks**: identical inputs and `Error` values for every variant.
 > - **Change all or none**: any change to one non-union variant applies to all of them (value and void) in the same change, and to the union where the language allows.
