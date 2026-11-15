@@ -29,7 +29,7 @@ Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultC
 - Out of scope, do not add: closed hierarchies, tuples, exceptions.
 - All variants share `src/Common/Error.cs`.
 - API: `IsSuccess`, `Value` (value results), `Errors`; `Value`/`Errors` throw `InvalidOperationException` in the wrong state.
-- Same API in every variant: constructors `(TValue)` / `()` for success and `(ImmutableArray<Error>)` (zero copy) only; every other failure input goes through static factories `From(Error)`, `From(Error[])`, `From(List<Error>)`, `From(IEnumerable<Error>)`, `From(params ReadOnlySpan<Error>)` (also on both unions). Dictionaries are unsupported by design. Every overload copies its input once.
+- Same API in every variant: constructors `(TValue)` / `()` for success and `(ImmutableArray<Error>)` (zero copy) only; every other failure input goes through static factories `From(Error)`, `From(Error[])`, `From(List<Error>)`, `From(IEnumerable<Error>)`, `From(params ReadOnlySpan<Error>)` (also on both unions). Each factory except `From(IEnumerable<Error>)` has an `implicit operator` twin that only calls it (`Error`, `Error[]`, `List<Error>`, `ReadOnlySpan<Error>`; `params` becomes a plain span), on every variant including both unions. C# forbids user-defined conversions from an interface, so there is no `IEnumerable<Error>` operator anywhere. Dictionaries are unsupported by design. Every overload copies its input once.
 - Only the `IEnumerable<Error>` path uses `src/Common/ErrorCollection.cs`; do not duplicate it. All others call `ImmutableArray.Create(...)` directly.
 - The union has no constructors; the value and `ImmutableArray<Error>` convert implicitly instead, and it offers the same `From(...)` factories.
 
@@ -76,7 +76,7 @@ One class per scenario in `tests/ResultWithUnion.Benchmarks/` grouped in one fol
 - Exactly one `[Benchmark(Baseline = true)]` per scenario (per `[BenchmarkCategory]` group), always `Union_*`.
 - Return the result (or use a `Consumer`/`Blackhole`) to prevent dead-code elimination; build inputs in `[GlobalSetup]`/`[IterationSetup]`.
 - Every class covers all variants; adding a variant means adding its method to every existing class with identical inputs.
-- Scenarios: create success (value/void), create error (value/void), errors from each collection type, `IsSuccess` branching on success and failure, reading `Errors` (1 and 5 errors), reading `Value`. **Planned, not yet written:** factory from error-or-value, `Match` and `switch` consumption.
+- Scenarios: create success (value/void), create error (value/void), errors from each collection type, implicit conversion from `Error`/`Error[]`/`List<Error>`/`ReadOnlySpan<Error>` (`Implicit/`), `IsSuccess` branching on success and failure, reading `Errors` (1 and 5 errors), reading `Value`. **Planned, not yet written:** factory from error-or-value, `Match` and `switch` consumption.
 
 ### Reporting results
 

@@ -32,4 +32,12 @@ public readonly struct ResultUnionCustom : IUnion
     public static ResultUnionCustom From(IEnumerable<Error> errors) => new(ErrorCollection.Create(errors));
 
     public static ResultUnionCustom From(params ReadOnlySpan<Error> errors) => new(ImmutableArray.Create(errors));
+
+    public static implicit operator ResultUnionCustom(Error error) => From(error);
+
+    public static implicit operator ResultUnionCustom(Error[] errors) => From(errors);
+
+    public static implicit operator ResultUnionCustom(List<Error> errors) => From(errors);
+
+    public static implicit operator ResultUnionCustom(ReadOnlySpan<Error> errors) => From(errors);
 }

@@ -21,7 +21,7 @@ Each variant exists as a value result (`src/ValueBasic/`, `Result<Variant><TValu
 
 The declared `union` boxes its `ImmutableArray<Error>` case into one `object?` field: with 5 errors it allocates 88 B versus 64 B for the structs (24 B box). A single `Error` is created with `From(error)`. The non-boxing variant exists to measure how much of that gap the boxing explains.
 
-Failed results accept a single `Error` or a collection of errors: `Error[]`, `List<Error>`, `ImmutableArray<Error>`, `ReadOnlySpan<Error>` and any `IEnumerable<Error>` (sets, queues, lazy sequences; dictionaries are not supported). The errors are copied once into an immutable array. Every variant (including both unions) offers the same API: constructors only for the success value and an `ImmutableArray<Error>`, and `From(...)` factories for everything else.
+Failed results accept a single `Error` or a collection of errors: `Error[]`, `List<Error>`, `ImmutableArray<Error>`, `ReadOnlySpan<Error>` and any `IEnumerable<Error>` (sets, queues, lazy sequences; dictionaries are not supported). The errors are copied once into an immutable array. Every variant (including both unions) offers the same API: constructors only for the success value and an `ImmutableArray<Error>`, and `From(...)` factories for everything else. Each factory except `IEnumerable<Error>` (C# forbids conversions from an interface) also has an `implicit operator` twin that calls it, so `ResultX r = error;` works on every variant.
 
 **Union limitation:** `ResultUnion<T>` cannot represent a `T` that overlaps `ImmutableArray<Error>` (such as `object`), nor a `null` success value; the non-union value results accept both. The comparison covers non-null, non-overlapping payloads.
 
@@ -34,6 +34,7 @@ Benchmarks live in `tests/ResultWithUnion.Benchmarks/`, one folder per scenario 
 | create success (value / void) | `Creating/CreatingValueResultBenchmarks`, `Creating/CreatingSuccessVoidResultBenchmarks` |
 | create error (value / void) | `Creating/CreatingErrorValueResultBenchmarks`, `Creating/CreatingErrorVoidResultBenchmarks` |
 | errors from each collection type (array, `List`, `ImmutableArray`, `HashSet`, lazy `IEnumerable`) | `Collections/CreatingErrorsFrom<Collection>ValueResultBenchmarks` and `...VoidResultBenchmarks` |
+| implicit conversion from Error, Error[], List<Error>, ReadOnlySpan<Error> (value / void) | `Implicit/ImplicitFrom<Source>ValueResultBenchmarks` and `...VoidResultBenchmarks` |
 | branch on `if(result.IsSuccess)`, read `Errors` (1 or 5 errors) and `Value`/`GetValue()` | `Checking/CheckingIsSuccess...`, `Reading/GettingErrors...` (value and void) and `Reading/GettingValueResultBenchmarks` |
 
 Closed hierarchies, tuples and exceptions are out of scope.

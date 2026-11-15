@@ -34,4 +34,12 @@ public readonly struct ResultReadonlyStruct
     public static ResultReadonlyStruct From(IEnumerable<Error> errors) => new(ErrorCollection.Create(errors));
 
     public static ResultReadonlyStruct From(params ReadOnlySpan<Error> errors) => new(ImmutableArray.Create(errors));
+
+    public static implicit operator ResultReadonlyStruct(Error error) => From(error);
+
+    public static implicit operator ResultReadonlyStruct(Error[] errors) => From(errors);
+
+    public static implicit operator ResultReadonlyStruct(List<Error> errors) => From(errors);
+
+    public static implicit operator ResultReadonlyStruct(ReadOnlySpan<Error> errors) => From(errors);
 }

@@ -41,4 +41,12 @@ public readonly struct ResultReadonlyStruct<TValue>
     public static ResultReadonlyStruct<TValue> From(IEnumerable<Error> errors) => new(ErrorCollection.Create(errors));
 
     public static ResultReadonlyStruct<TValue> From(params ReadOnlySpan<Error> errors) => new(ImmutableArray.Create(errors));
+
+    public static implicit operator ResultReadonlyStruct<TValue>(Error error) => From(error);
+
+    public static implicit operator ResultReadonlyStruct<TValue>(Error[] errors) => From(errors);
+
+    public static implicit operator ResultReadonlyStruct<TValue>(List<Error> errors) => From(errors);
+
+    public static implicit operator ResultReadonlyStruct<TValue>(ReadOnlySpan<Error> errors) => From(errors);
 }

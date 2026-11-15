@@ -34,4 +34,12 @@ public sealed class ResultClass
     public static ResultClass From(IEnumerable<Error> errors) => new(ErrorCollection.Create(errors));
 
     public static ResultClass From(params ReadOnlySpan<Error> errors) => new(ImmutableArray.Create(errors));
+
+    public static implicit operator ResultClass(Error error) => From(error);
+
+    public static implicit operator ResultClass(Error[] errors) => From(errors);
+
+    public static implicit operator ResultClass(List<Error> errors) => From(errors);
+
+    public static implicit operator ResultClass(ReadOnlySpan<Error> errors) => From(errors);
 }

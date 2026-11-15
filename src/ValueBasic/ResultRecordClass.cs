@@ -41,4 +41,12 @@ public sealed record class ResultRecordClass<TValue>
     public static ResultRecordClass<TValue> From(IEnumerable<Error> errors) => new(ErrorCollection.Create(errors));
 
     public static ResultRecordClass<TValue> From(params ReadOnlySpan<Error> errors) => new(ImmutableArray.Create(errors));
+
+    public static implicit operator ResultRecordClass<TValue>(Error error) => From(error);
+
+    public static implicit operator ResultRecordClass<TValue>(Error[] errors) => From(errors);
+
+    public static implicit operator ResultRecordClass<TValue>(List<Error> errors) => From(errors);
+
+    public static implicit operator ResultRecordClass<TValue>(ReadOnlySpan<Error> errors) => From(errors);
 }

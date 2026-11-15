@@ -23,4 +23,12 @@ public union ResultUnion(ImmutableArray<Error>)
     public static ResultUnion From(IEnumerable<Error> errors) => new(ErrorCollection.Create(errors));
 
     public static ResultUnion From(params ReadOnlySpan<Error> errors) => new(ImmutableArray.Create(errors));
+
+    public static implicit operator ResultUnion(Error error) => From(error);
+
+    public static implicit operator ResultUnion(Error[] errors) => From(errors);
+
+    public static implicit operator ResultUnion(List<Error> errors) => From(errors);
+
+    public static implicit operator ResultUnion(ReadOnlySpan<Error> errors) => From(errors);
 }
