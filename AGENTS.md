@@ -7,7 +7,7 @@ Guidance for AI coding assistants working in this repository.
 An experiment, not a library: compares the **Result pattern** built the classic way (class, record class, struct, readonly struct, record struct) against one built on the **C# 15 / .NET 11 `union`**, measured with BenchmarkDotNet for speed and allocations. Question: *does a `union` make a better Result type in performance, allocations and ergonomics?*
 
 - .NET 11 SDK (pinned in `global.json`), C# 15 (default for `net11`; do **not** set `LangVersion`, do **not** add older targets or `RuntimeMoniker` jobs).
-- `src/` holds one project per variant (`ResultClass/`, `ResultRecordClass/`, `ResultStruct/`, `ResultReadonlyStruct/`, `ResultRecordStruct/`, `ResultUnion/`, `ResultUnionCustom/`); `tests/Result.Benchmarks/` is the single benchmark project and references all of them. There is no shared project.
+- `src/` holds one project per variant (`ResultClass/`, `ResultRecordClass/`, `ResultStruct/`, `ResultReadonlyStruct/`, `ResultRecordStruct/`, `ResultUnion/`, `ResultUnionCustom/`); `tests/Result.Benchmarks/` is the single benchmark project and references all of them; `tests/<Variant>.Tests/` is one unit-test project per variant with the same three test files (`ResultTests.cs`, `ErrorTests.cs`, `ErrorCollectionTests.cs`), kept as similar as the API allows. There is no shared project.
 
 > ## HARD RULE: variants differ only in the representation under test
 >

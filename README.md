@@ -41,6 +41,18 @@ Benchmarks live in the single project `tests/Result.Benchmarks/` (it references 
 
 Closed hierarchies, tuples and exceptions are out of scope.
 
+## Unit tests
+
+Each variant has its own test project, `tests/<Variant>.Tests/` (xunit v3, AwesomeAssertions, coverlet.MTP), with the same three files: `ResultTests.cs`, `ErrorTests.cs`, `ErrorCollectionTests.cs`. The five non-union suites are near-identical (record variants add equality and `ToString` tests; the struct variants add `default` tests); the two union suites differ only where the API does (`GetValue()`, no constructors, no `HasValue`/`TryGetValue` on the declared union).
+
+```bash
+dotnet test --solution test-dotnet-result-pattern-with-union.slnx
+dotnet run .claude/skills/dotnet-tests/scripts/tests.cs -- coverage
+dotnet run .claude/skills/dotnet-tests/scripts/tests.cs -- mutation
+```
+
+The tests are characterization tests of existing behaviour; Stryker.NET mutation runs prove they can fail (about 97% mutation score for the five non-union variants, about 95% for `ResultUnionCustom`). Line and branch coverage is 100% for every source file. Stryker cannot mutate `ResultUnion` (declared `union` syntax), so that project is covered by the coverage gate only.
+
 ## Running the benchmarks
 
 ```bash
