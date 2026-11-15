@@ -87,10 +87,10 @@ Use Bash or zsh on macOS/Linux (Git Bash also works on Windows), or PowerShell (
 
 ### Fetch state (step 2)
 
-Open review threads. Output is one JSON object per thread: `threadId` is needed to resolve it, `commentId` to reply to it.
+Open review threads. Output is one JSON object per thread: `threadId` is needed to resolve it, `commentId` (the root comment) to reply to it, and `comments` lists every comment of the thread in order, so replies and objections are never missed.
 
 ```text
-gh api graphql --paginate -F owner='{owner}' -F repo='{repo}' -F pr=<PR> -f query='query($owner:String!,$repo:String!,$pr:Int!,$endCursor:String){repository(owner:$owner,name:$repo){pullRequest(number:$pr){reviewThreads(first:50,after:$endCursor){pageInfo{hasNextPage endCursor} nodes{id isResolved isOutdated path comments(first:1){nodes{databaseId author{login} body originalCommit{oid}}}}}}}}' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved==false) | {threadId:.id, commentId:.comments.nodes[0].databaseId, author:.comments.nodes[0].author.login, path:.path, outdated:.isOutdated, commit:.comments.nodes[0].originalCommit.oid, body:.comments.nodes[0].body}'
+gh api graphql --paginate -F owner='{owner}' -F repo='{repo}' -F pr=<PR> -f query='query($owner:String!,$repo:String!,$pr:Int!,$endCursor:String){repository(owner:$owner,name:$repo){pullRequest(number:$pr){reviewThreads(first:50,after:$endCursor){pageInfo{hasNextPage endCursor} nodes{id isResolved isOutdated path comments(first:100){nodes{databaseId author{login} body originalCommit{oid}}}}}}}}' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved==false) | {threadId:.id, commentId:.comments.nodes[0].databaseId, path:.path, outdated:.isOutdated, commit:.comments.nodes[0].originalCommit.oid, comments:[.comments.nodes[] | {author:.author.login, body:.body}]}'
 ```
 
 `{owner}` and `{repo}` are filled in by `gh` from the current repository. Outside a clone, replace them with the real values.
