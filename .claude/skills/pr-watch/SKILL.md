@@ -37,7 +37,8 @@ Use Bash or zsh on macOS/Linux (Git Bash also works on Windows), or PowerShell (
 - **Sign** every comment you post on the PR with `(Agent AI)` as the very first line.
 - **Verify** every reviewer claim (bot or human) by reproducing it before acting on it.
 - **Check the comment is still valid:** reviews are pinned to the commit they reviewed; compare it with the current HEAD.
-- **Comment before resolving**, and cite the commit that addressed the point.
+- **Close every addressed thread in this order: commit, PR comment, resolve.** A fix always gets its own commit (pushed) before the comment; the comment always cites that commit's hash; the thread is resolved only after the comment is posted. For feedback that needs no code change, the comment carries the evidence instead of a hash, then the thread is resolved. A human's thread, or a high-risk one, is resolved only once the rules for those cases are met.
+- **Commit one logical fix per commit**, following the project's commit conventions, so each comment can cite a single hash.
 - **Ask a human** whether they agree to close the thread, unless you applied exactly what they asked.
 - **Paginate** every list query (`--paginate`); a truncated page hides open threads.
 - **Keep temporary files in `.tmp/pr-watch/`** (see [Temporary files](#temporary-files)) and make sure that folder is git-ignored before writing to it.
@@ -69,12 +70,13 @@ Use Bash or zsh on macOS/Linux (Git Bash also works on Windows), or PowerShell (
 3. Triage each item           -> bot / human / design-level / HIGH-RISK / noise
 4. Verify the claim           -> reproduce; still valid on current HEAD?
 5. Act
-   |- valid, implementation   -> fix, run project validation, push
-   |- invalid                 -> answer with evidence
+   |- valid, implementation   -> fix, run project validation, COMMIT, push
+   |- invalid                 -> answer with evidence (no commit)
    |- design-level            -> STOP, ask the user
    `- HIGH-RISK               -> STOP, follow up with the user, wait for their decision
-6. Reply on the thread (signed), citing the commit when there is one
-7. Resolve the thread         -> bot: now / human: after they agree
+6. COMMENT on the thread (signed), citing the commit hash (or the evidence when there is no commit)
+7. RESOLVE the thread         -> bot: now / human: after they agree
+   Every addressed thread ends as: commit -> PR comment -> resolved. Never skip a step or reorder.
 8. Re-check (step 2)          -> repeat while the exit condition is not met AND no guard rail has tripped
 9. Report
 ```
@@ -222,7 +224,7 @@ Does not apply, for two reasons.
 
 **Human:** answer on the merits and, right below, **ask** whether it makes sense and whether they agree to close the thread. Resolve only after they agree, or after you applied what they asked. If they add context, handle the context first.
 
-**Always comment before resolving, then cite the commit that addressed it.** Never resolve in silence.
+**Always close each addressed thread as commit, then comment citing the commit, then resolve.** Never resolve in silence, and never comment "fixed" before the commit is pushed.
 
 ## When to stop and ask
 
@@ -261,7 +263,7 @@ Do not assume anything about the project; discover it:
 
 - **Required checks:** `gh pr checks <PR> --required`, or the branch protection rules.
 - **Validation before pushing:** the commands documented in the README, CONTRIBUTING, or the CI workflow files (`.github/workflows/`). Run the same lint, build, and test steps CI runs.
-- **Commit style and PR template:** read CONTRIBUTING and `.github/PULL_REQUEST_TEMPLATE.md`, and follow them.
+- **Commit style and PR template:** read CONTRIBUTING and `.github/PULL_REQUEST_TEMPLATE.md`, and follow them. Also follow any project rule about who may commit or when (for example, one requiring human review before a commit); if such a rule exists, ask the user before committing.
 - **Language of your replies:** match the language used in the PR and its review threads.
 - **Noise:** bots that only post links or status on every push (deploy previews, CI summaries) are not review feedback; ignore them.
 
