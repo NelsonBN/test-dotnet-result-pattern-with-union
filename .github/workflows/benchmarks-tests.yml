@@ -13,7 +13,6 @@ on:
 env:
   BENCHMARKS_PROJECT: 'tests/ResultWithUnion.Benchmarks'
   BENCHMARKS_ARTIFACTS: 'BenchmarkDotNet.Artifacts'
-  BENCHMARKS_REPORT: 'benchmark-report.md'
 
   # Set up the .NET environment to improve performance and reliability
   DOTNET_CLI_TELEMETRY_OPTOUT: true # Disable .NET CLI telemetry
@@ -34,13 +33,79 @@ concurrency:
 
 jobs:
 
-  run-benchmarks:
-    name: "Run benchmarks"
+  # Builds the matrix from the source: every .cs file under the benchmarks project that has a [Benchmark] method
+  # contributes its (first) class, so adding a new benchmark class needs no change in this workflow.
+  discover:
+    name: "Discover benchmarks"
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.discover.outputs.matrix }}
+
+    steps:
+    - name: "Checkout"
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+    - name: "Discover benchmark classes"
+      id: discover
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        classes=()
+        while IFS= read -r file; do
+          classes+=("$(grep -m1 -oP '\bclass\s+\K\w+' "${file}")")
+        done < <(grep -rlE '^\s*\[Benchmark(\(|\])' "${BENCHMARKS_PROJECT}" --include='*.cs' | sort)
+
+        if [ "${#classes[@]}" -eq 0 ]; then
+          echo "::error::No benchmark classes found in ${BENCHMARKS_PROJECT}"
+          exit 1
+        fi
+
+        # GitHub allows at most 256 jobs per matrix
+        if [ "${#classes[@]}" -gt 256 ]; then
+          echo "::error::${#classes[@]} benchmark classes found, a matrix supports at most 256 jobs"
+          exit 1
+        fi
+
+        # Class names become part of filters, job names, artifact names and PR comment headers
+        duplicates="$(printf '%s\n' "${classes[@]}" | sort | uniq -d)"
+        if [ -n "${duplicates}" ]; then
+          echo "::error::Duplicated benchmark class names: ${duplicates}"
+          exit 1
+        fi
+
+        matrix="$(printf '%s\n' "${classes[@]}" | jq -R . | jq -sc '{include: map({name: .})}')"
+        echo "matrix=${matrix}" >> "${GITHUB_OUTPUT}"
+
+        {
+          echo "### Benchmarks to run (${#classes[@]})"
+          printf -- '- `%s`\n' "${classes[@]}"
+        } >> "${GITHUB_STEP_SUMMARY}"
+
+
+  run-benchmarks:
+    name: "Benchmarks (${{ matrix.name }})"
+    needs: discover
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
     permissions:
       contents: read
       pull-requests: write
+
+    strategy:
+      # Each class runs alone on its own runner, so benchmarks never compete for CPU.
+      # Only 4 run at a time (also keeps well below the concurrent jobs limit of the plan); the others wait in the queue for a free slot.
+      max-parallel: 4
+      # One failing class must not cancel the remaining ones
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+
+    env:
+      BENCHMARKS_REPORT: 'benchmark-report-${{ matrix.name }}.md'
+      BENCHMARKS_COMMENT: 'benchmark-comment-${{ matrix.name }}.md'
 
     steps:
     - name: "Checkout"
@@ -58,14 +123,16 @@ jobs:
       run: dotnet build ${{ env.BENCHMARKS_PROJECT }} --configuration Release --no-restore
 
     - name: "Run benchmarks"
-      run: dotnet run --project ${{ env.BENCHMARKS_PROJECT }} --configuration Release --no-build -- --filter '*' --exporters github json --inProcess
+      run: dotnet run --project ${{ env.BENCHMARKS_PROJECT }} --configuration Release --no-build -- --filter '*.${{ matrix.name }}.*' --exporters github json --inProcess
 
     - name: "Build benchmark report"
       if: success()
       shell: bash
+      env:
+        BENCHMARK_CLASS: ${{ matrix.name }}
       run: |
         {
-          echo "## Benchmark results"
+          echo "## Benchmark results: ${BENCHMARK_CLASS}"
           echo
           echo "- **Commit:** \`${GITHUB_SHA}\`"
           echo "- **Runner:** \`${RUNNER_OS}/${RUNNER_ARCH}\` (shared GitHub-hosted runner, results are indicative only)"
@@ -79,24 +146,37 @@ jobs:
           done
         } > "${BENCHMARKS_REPORT}"
 
+        # PR comments are limited to 65536 characters; the job summary (1 MiB) always has the full report
+        if [ "$(wc -c < "${BENCHMARKS_REPORT}")" -gt 60000 ]; then
+          {
+            head -c 60000 "${BENCHMARKS_REPORT}"
+            echo
+            echo
+            echo "_Report truncated, see the full one in the [workflow run summary](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})._"
+          } > "${BENCHMARKS_COMMENT}"
+        else
+          cp "${BENCHMARKS_REPORT}" "${BENCHMARKS_COMMENT}"
+        fi
+
     - name: "Publish benchmark summary"
       if: success()
       shell: bash
       run: cat "${BENCHMARKS_REPORT}" >> "${GITHUB_STEP_SUMMARY}"
 
-    # Fork PRs get a read-only token, so they can't comment; they still get the job summary
+    # Fork PRs get a read-only token, so they can't comment; they still get the job summary.
+    # The header is unique per class, otherwise every job would overwrite the same sticky comment.
     - name: "Add benchmarks in PR Comment"
       uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88
       if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
       with:
-        header: benchmark-report
-        path: ${{ env.BENCHMARKS_REPORT }}
+        header: benchmark-report-${{ matrix.name }}
+        path: ${{ env.BENCHMARKS_COMMENT }}
 
     - name: "Upload Benchmark Results"
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
       if: always()
       with:
-        name: 'BenchmarkResults'
+        name: 'BenchmarkResults-${{ matrix.name }}'
         path: |
           ${{ env.BENCHMARKS_ARTIFACTS }}/**/*
           ${{ env.BENCHMARKS_REPORT }}
