@@ -25,10 +25,7 @@ public readonly struct ResultReadonlyStruct
         IsSuccess = false;
     }
 
-    public ResultReadonlyStruct(Error error)
-        : this(ImmutableArray.Create(error))
-    {
-    }
+    public static ResultReadonlyStruct From(Error error) => new(ImmutableArray.Create(error));
 
     public ResultReadonlyStruct(Error[] errors)
         : this(ImmutableArray.Create(errors.AsSpan()))

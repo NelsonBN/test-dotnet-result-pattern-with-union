@@ -25,10 +25,7 @@ public sealed record class ResultRecordClass
         IsSuccess = false;
     }
 
-    public ResultRecordClass(Error error)
-        : this(ImmutableArray.Create(error))
-    {
-    }
+    public static ResultRecordClass From(Error error) => new(ImmutableArray.Create(error));
 
     public ResultRecordClass(Error[] errors)
         : this(ImmutableArray.Create(errors.AsSpan()))

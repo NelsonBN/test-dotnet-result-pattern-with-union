@@ -10,12 +10,8 @@ namespace ResultWithUnion.ValueBasic;
 [Union]
 public readonly struct ResultUnionNonBoxing<T> : IUnion
 {
-    private const byte ValueTag = 1;
-    private const byte ErrorsTag = 2;
-
     private readonly T? _value;
     private readonly ImmutableArray<Error> _errors;
-    private readonly byte _tag;
 
     public ResultUnionNonBoxing(T value)
     {
@@ -25,40 +21,27 @@ public readonly struct ResultUnionNonBoxing<T> : IUnion
         }
 
         _value = value;
-        _tag = ValueTag;
-    }
-
-    public ResultUnionNonBoxing(Error error)
-    {
-        _errors = ImmutableArray.Create(error);
-        _tag = ErrorsTag;
+        IsSuccess = true;
     }
 
     public ResultUnionNonBoxing(ImmutableArray<Error> errors)
-    {
-        _errors = errors;
-        _tag = ErrorsTag;
-    }
+        => _errors = errors;
 
-    public object? Value => _tag switch
-    {
-        ValueTag => _value,
-        ErrorsTag => _errors,
-        _ => null,
-    };
+    public readonly bool IsSuccess { get; }
 
-    public bool IsSuccess => _tag == ValueTag;
+    public object? Value => IsSuccess
+        ? _value
+        : _errors.IsDefault ? null : _errors;
 
-    public T GetValue() => _tag == ValueTag
+    public T GetValue() => IsSuccess
         ? _value!
         : throw new InvalidOperationException("Value can be retrieved only when the result is not an error");
 
-    public ImmutableArray<Error> Errors => _tag switch
-    {
-        ErrorsTag => _errors.IsDefault ? ImmutableArray<Error>.Empty : _errors,
-        ValueTag => throw new InvalidOperationException("Errors can be retrieved only when the result is an error"),
-        _ => ImmutableArray<Error>.Empty,
-    };
+    public ImmutableArray<Error> Errors => IsSuccess
+        ? throw new InvalidOperationException("Errors can be retrieved only when the result is an error")
+        : _errors.IsDefault ? ImmutableArray<Error>.Empty : _errors;
+
+    public static ResultUnionNonBoxing<T> From(Error error) => new(ImmutableArray.Create(error));
 
     public static ResultUnionNonBoxing<T> From(Error[] errors) => new(ImmutableArray.Create(errors.AsSpan()));
 

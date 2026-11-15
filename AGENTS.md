@@ -28,7 +28,7 @@ Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultC
 - Out of scope, do not add: closed hierarchies, tuples, exceptions.
 - All variants share `src/Common/Error.cs`.
 - API: `IsSuccess`, `Value` (value results), `Errors`; `Value`/`Errors` throw `InvalidOperationException` in the wrong state.
-- Class/struct constructors: `(TValue)` / `()` for success, plus `(Error)`, `(ImmutableArray<Error>)` (zero copy), `(Error[])`, `(List<Error>)`, `(IEnumerable<Error>)`, `(params ReadOnlySpan<Error>)`. Dictionaries are unsupported by design. Every overload copies its input once.
+- Class/struct constructors: `(TValue)` / `()` for success, plus `(ImmutableArray<Error>)` (zero copy), `(Error[])`, `(List<Error>)`, `(IEnumerable<Error>)`, `(params ReadOnlySpan<Error>)`. A single `Error` is created with the static `From(Error)` factory (in every variant, including the non-boxing union), not a constructor. Dictionaries are unsupported by design. Every overload copies its input once.
 - Only the `IEnumerable<Error>` path uses `src/Common/ErrorCollection.cs`; do not duplicate it. All others call `ImmutableArray.Create(...)` directly.
 - The union offers `From(...)` static overloads for `Error[]`, `List<Error>`, `IEnumerable<Error>` and `params ReadOnlySpan<Error>`; the value and `ImmutableArray<Error>` convert implicitly; a single `Error` goes through `From(error)`.
 

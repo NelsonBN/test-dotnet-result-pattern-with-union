@@ -28,11 +28,11 @@ public class CheckingIsSuccessValueResultBenchmarks
         FakeModel model = new();
         Error error = new("fake");
 
-        _recordStruct = Success ? new(model) : new(error);
-        _struct = Success ? new(model) : new(error);
-        _readonlyStruct = Success ? new(model) : new(error);
-        _class = Success ? new(model) : new(error);
-        _recordClass = Success ? new(model) : new(error);
+        _recordStruct = Success ? new(model) : ResultRecordStruct<FakeModel>.From(error);
+        _struct = Success ? new(model) : ResultStruct<FakeModel>.From(error);
+        _readonlyStruct = Success ? new(model) : ResultReadonlyStruct<FakeModel>.From(error);
+        _class = Success ? new(model) : ResultClass<FakeModel>.From(error);
+        _recordClass = Success ? new(model) : ResultRecordClass<FakeModel>.From(error);
         _union = Success ? model : ResultUnion<FakeModel>.From(error);
         _unionNonBoxing = Success ? model : ResultUnionNonBoxing<FakeModel>.From(error);
     }

@@ -32,10 +32,7 @@ public struct ResultStruct<TValue>
         IsSuccess = false;
     }
 
-    public ResultStruct(Error error)
-        : this(ImmutableArray.Create(error))
-    {
-    }
+    public static ResultStruct<TValue> From(Error error) => new(ImmutableArray.Create(error));
 
     public ResultStruct(Error[] errors)
         : this(ImmutableArray.Create(errors.AsSpan()))

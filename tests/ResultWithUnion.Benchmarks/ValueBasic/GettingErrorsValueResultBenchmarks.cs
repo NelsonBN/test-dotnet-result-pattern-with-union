@@ -30,11 +30,11 @@ public class GettingErrorsValueResultBenchmarks
     {
         Error[] errors = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new Error($"fake{index}"))];
 
-        _recordStruct = ErrorsCount == 1 ? new(errors[0]) : new(errors);
-        _struct = ErrorsCount == 1 ? new(errors[0]) : new(errors);
-        _readonlyStruct = ErrorsCount == 1 ? new(errors[0]) : new(errors);
-        _class = ErrorsCount == 1 ? new(errors[0]) : new(errors);
-        _recordClass = ErrorsCount == 1 ? new(errors[0]) : new(errors);
+        _recordStruct = ErrorsCount == 1 ? ResultRecordStruct<FakeModel>.From(errors[0]) : new(errors);
+        _struct = ErrorsCount == 1 ? ResultStruct<FakeModel>.From(errors[0]) : new(errors);
+        _readonlyStruct = ErrorsCount == 1 ? ResultReadonlyStruct<FakeModel>.From(errors[0]) : new(errors);
+        _class = ErrorsCount == 1 ? ResultClass<FakeModel>.From(errors[0]) : new(errors);
+        _recordClass = ErrorsCount == 1 ? ResultRecordClass<FakeModel>.From(errors[0]) : new(errors);
         _union = ResultUnion<FakeModel>.From(errors);
         _unionNonBoxing = ResultUnionNonBoxing<FakeModel>.From(errors);
     }

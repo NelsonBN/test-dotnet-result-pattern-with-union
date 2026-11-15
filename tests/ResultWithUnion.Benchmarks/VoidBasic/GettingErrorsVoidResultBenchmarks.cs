@@ -29,11 +29,11 @@ public class GettingErrorsVoidResultBenchmarks
     {
         Error[] errors = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new Error($"fake{index}"))];
 
-        _recordStruct = ErrorsCount == 1 ? new(errors[0]) : new(errors);
-        _struct = ErrorsCount == 1 ? new(errors[0]) : new(errors);
-        _readonlyStruct = ErrorsCount == 1 ? new(errors[0]) : new(errors);
-        _class = ErrorsCount == 1 ? new(errors[0]) : new(errors);
-        _recordClass = ErrorsCount == 1 ? new(errors[0]) : new(errors);
+        _recordStruct = ErrorsCount == 1 ? ResultRecordStruct.From(errors[0]) : new(errors);
+        _struct = ErrorsCount == 1 ? ResultStruct.From(errors[0]) : new(errors);
+        _readonlyStruct = ErrorsCount == 1 ? ResultReadonlyStruct.From(errors[0]) : new(errors);
+        _class = ErrorsCount == 1 ? ResultClass.From(errors[0]) : new(errors);
+        _recordClass = ErrorsCount == 1 ? ResultRecordClass.From(errors[0]) : new(errors);
         _union = ResultUnion.From(errors);
         _unionNonBoxing = ResultUnionNonBoxing.From(errors);
     }

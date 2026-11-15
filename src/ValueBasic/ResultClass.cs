@@ -32,10 +32,7 @@ public sealed class ResultClass<TValue>
         IsSuccess = false;
     }
 
-    public ResultClass(Error error)
-        : this(ImmutableArray.Create(error))
-    {
-    }
+    public static ResultClass<TValue> From(Error error) => new(ImmutableArray.Create(error));
 
     public ResultClass(Error[] errors)
         : this(ImmutableArray.Create(errors.AsSpan()))

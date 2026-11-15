@@ -17,19 +17,19 @@ public class CreatingErrorValueResultBenchmarks
     public void Setup() => _error = new("fake");
 
     [Benchmark]
-    public ResultRecordStruct<FakeModel> RecordStruct_CreateError() => new(_error);
+    public ResultRecordStruct<FakeModel> RecordStruct_CreateError() => ResultRecordStruct<FakeModel>.From(_error);
 
     [Benchmark]
-    public ResultStruct<FakeModel> Struct_CreateError() => new(_error);
+    public ResultStruct<FakeModel> Struct_CreateError() => ResultStruct<FakeModel>.From(_error);
 
     [Benchmark]
-    public ResultReadonlyStruct<FakeModel> ReadonlyStruct_CreateError() => new(_error);
+    public ResultReadonlyStruct<FakeModel> ReadonlyStruct_CreateError() => ResultReadonlyStruct<FakeModel>.From(_error);
 
     [Benchmark]
-    public ResultClass<FakeModel> Class_CreateError() => new(_error);
+    public ResultClass<FakeModel> Class_CreateError() => ResultClass<FakeModel>.From(_error);
 
     [Benchmark]
-    public ResultRecordClass<FakeModel> RecordClass_CreateError() => new(_error);
+    public ResultRecordClass<FakeModel> RecordClass_CreateError() => ResultRecordClass<FakeModel>.From(_error);
 
     [Benchmark(Baseline = true)]
     public ResultUnion<FakeModel> Union_CreateError() => ResultUnion<FakeModel>.From(_error);

@@ -26,11 +26,11 @@ public class CheckingIsSuccessVoidResultBenchmarks
     {
         Error error = new("fake");
 
-        _recordStruct = Success ? new() : new(error);
-        _struct = Success ? new() : new(error);
-        _readonlyStruct = Success ? new() : new(error);
-        _class = Success ? new() : new(error);
-        _recordClass = Success ? new() : new(error);
+        _recordStruct = Success ? new() : ResultRecordStruct.From(error);
+        _struct = Success ? new() : ResultStruct.From(error);
+        _readonlyStruct = Success ? new() : ResultReadonlyStruct.From(error);
+        _class = Success ? new() : ResultClass.From(error);
+        _recordClass = Success ? new() : ResultRecordClass.From(error);
         _union = Success ? new ResultUnion() : ResultUnion.From(error);
         _unionNonBoxing = Success ? new ResultUnionNonBoxing() : ResultUnionNonBoxing.From(error);
     }

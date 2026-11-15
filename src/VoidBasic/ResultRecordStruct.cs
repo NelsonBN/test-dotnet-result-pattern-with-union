@@ -25,10 +25,7 @@ public record struct ResultRecordStruct
         IsSuccess = false;
     }
 
-    public ResultRecordStruct(Error error)
-        : this(ImmutableArray.Create(error))
-    {
-    }
+    public static ResultRecordStruct From(Error error) => new(ImmutableArray.Create(error));
 
     public ResultRecordStruct(Error[] errors)
         : this(ImmutableArray.Create(errors.AsSpan()))
