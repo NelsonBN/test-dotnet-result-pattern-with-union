@@ -68,13 +68,13 @@ public class TryGettingValueResultBenchmarks
         return value;
     }
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public FakeModel Union_TryGetValue()
     {
         return _union is FakeModel value ? value : default!;
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public FakeModel UnionCustom_TryGetValue()
     {
         _unionCustom.TryGetValue(out FakeModel value);

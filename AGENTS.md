@@ -11,7 +11,7 @@ An experiment, not a library: compares the **Result pattern** built the classic 
 
 > ## HARD RULE: variants differ only in the representation under test
 >
-> - The **union is the only variant allowed to look different** (it cannot declare fields, a `Value` member or constructors) and it is the **benchmark baseline** (`Union_*`, so `Ratio` reads "variant vs union").
+> - The **declared union is the only variant allowed to look different** (it cannot declare fields, a `Value` member or constructors). The **benchmark baseline** is `UnionCustom_*` (hand-written, non-boxing), so `Ratio` reads "variant vs custom union".
 > - The other five variants must be **near-identical**: same fields, members, constructor overloads and order, parameter names, exceptions and messages, nullability, statement style. Diffing any two must show only the type declaration and what the language forces. Start a new variant by copying an existing one.
 > - **Most similar API possible across all variants, unions included**: the same constructors (only where the language allows them), the same `From(...)` factory overloads, the same member names, parameter names and signatures. A new member or overload is added to every variant at once; the union differs only where the language forces it (for example `GetValue()` instead of `Value`, implicit conversions instead of constructors). Prefer changing the union's API toward the others, and the others toward the union, over letting them drift apart.
 > - **Same storage and semantics**: `ImmutableArray<Error>` errors, same wrong-state behaviour, no validation.
@@ -24,7 +24,7 @@ An experiment, not a library: compares the **Result pattern** built the classic 
 
 Each variant exists as a value result `Result<Variant><TValue>` in `src/ValueBasic/` and a void result `Result<Variant>` in `src/VoidBasic/`: one type per file, file-scoped namespace `ResultWithUnion.ValueBasic` / `ResultWithUnion.VoidBasic`.
 
-Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultClass` (sealed), `ResultRecordClass` (sealed), and `ResultUnion` (`union ResultUnion<T>(T, ImmutableArray<Error>)` / `union ResultUnion(ImmutableArray<Error>)`). A second union, `ResultUnionCustom` (hand-written `[Union]` readonly struct with `HasValue`/`TryGetValue`, benchmarked as `UnionCustom_*`), measures the cost of boxing; `Union_*` stays the only baseline.
+Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultClass` (sealed), `ResultRecordClass` (sealed), and `ResultUnion` (`union ResultUnion<T>(T, ImmutableArray<Error>)` / `union ResultUnion(ImmutableArray<Error>)`). A second union, `ResultUnionCustom` (hand-written `[Union]` readonly struct with `HasValue`/`TryGetValue`, benchmarked as `UnionCustom_*`), measures the cost of boxing and is the only baseline (`UnionCustom_*`).
 
 - Out of scope, do not add: closed hierarchies, tuples, exceptions.
 - All variants share `src/Common/Error.cs`.
@@ -74,14 +74,14 @@ One class per scenario in `tests/ResultWithUnion.Benchmarks/` grouped in one fol
 
 - Classes are named `<Scenario>Benchmarks`, methods `<Variant>_<Action>` (`RecordStruct`, `Struct`, `ReadonlyStruct`, `Class`, `RecordClass`, `Union`).
 - `[MemoryDiagnoser]` is mandatory; also `[RankColumn]` and `[Orderer(SummaryOrderPolicy.FastestToSlowest)]`.
-- Exactly one `[Benchmark(Baseline = true)]` per scenario (per `[BenchmarkCategory]` group), always `Union_*`.
+- Exactly one `[Benchmark(Baseline = true)]` per scenario (per `[BenchmarkCategory]` group), always `UnionCustom_*`.
 - Return the result (or use a `Consumer`/`Blackhole`) to prevent dead-code elimination; build inputs in `[GlobalSetup]`/`[IterationSetup]`.
 - Every class covers all variants; adding a variant means adding its method to every existing class with identical inputs.
 - Scenarios: create success (value/void), create error (value/void), errors from each collection type, implicit conversion from `Error`/`Error[]`/`List<Error>`/`ReadOnlySpan<Error>` (`Implicit/`), `HasValue`/`TryGetValue` (`Checking/`, `Reading/`), `IsSuccess` branching on success and failure, reading `Errors` (1 and 5 errors), reading `Value`. **Planned, not yet written:** factory from error-or-value, `Match` and `switch` consumption.
 
 ### Reporting results
 
-- Report Mean, Allocated, Gen0 and Ratio (vs union) plus CPU, OS and runtime; compare only within one run on one machine.
+- Report Mean, Allocated, Gen0 and Ratio (vs custom union) plus CPU, OS and runtime; compare only within one run on one machine.
 - Call out boxing/allocation differences explicitly.
 - Record conclusions in `README.md` whenever scenarios or results change.
 

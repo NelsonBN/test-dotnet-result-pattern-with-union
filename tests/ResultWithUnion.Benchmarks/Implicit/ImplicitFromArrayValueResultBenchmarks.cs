@@ -35,9 +35,9 @@ public class ImplicitFromArrayValueResultBenchmarks
     [Benchmark]
     public ResultRecordClass<FakeModel> RecordClass_CreateErrors() => _errors;
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ResultUnion<FakeModel> Union_CreateErrors() => _errors;
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ResultUnionCustom<FakeModel> UnionCustom_CreateErrors() => _errors;
 }

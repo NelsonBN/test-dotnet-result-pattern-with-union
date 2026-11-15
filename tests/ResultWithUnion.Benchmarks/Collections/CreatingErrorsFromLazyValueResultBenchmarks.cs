@@ -36,9 +36,9 @@ public class CreatingErrorsFromLazyValueResultBenchmarks
     [Benchmark]
     public ResultRecordClass<FakeModel> RecordClass_CreateErrors() => ResultRecordClass<FakeModel>.From(_errors);
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ResultUnion<FakeModel> Union_CreateErrors() => ResultUnion<FakeModel>.From(_errors);
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ResultUnionCustom<FakeModel> UnionCustom_CreateErrors() => ResultUnionCustom<FakeModel>.From(_errors);
 }

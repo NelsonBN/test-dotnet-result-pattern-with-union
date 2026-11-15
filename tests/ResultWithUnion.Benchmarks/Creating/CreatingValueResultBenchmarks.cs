@@ -30,9 +30,9 @@ public class CreatingValueResultBenchmarks
     [Benchmark]
     public ResultRecordClass<FakeModel> RecordClass_CreateSuccess() => new(_model);
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ResultUnion<FakeModel> Union_CreateSuccess() => _model;
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ResultUnionCustom<FakeModel> UnionCustom_CreateSuccess() => _model;
 }

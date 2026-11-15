@@ -31,9 +31,9 @@ public class CreatingErrorValueResultBenchmarks
     [Benchmark]
     public ResultRecordClass<FakeModel> RecordClass_CreateError() => ResultRecordClass<FakeModel>.From(_error);
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ResultUnion<FakeModel> Union_CreateError() => ResultUnion<FakeModel>.From(_error);
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ResultUnionCustom<FakeModel> UnionCustom_CreateError() => ResultUnionCustom<FakeModel>.From(_error);
 }

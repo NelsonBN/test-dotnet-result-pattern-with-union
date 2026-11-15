@@ -55,14 +55,14 @@ public class ImplicitFromSpanVoidResultBenchmarks
         return errors;
     }
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ResultUnion Union_CreateErrors()
     {
         ReadOnlySpan<Error> errors = _errors;
         return errors;
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ResultUnionCustom UnionCustom_CreateErrors()
     {
         ReadOnlySpan<Error> errors = _errors;

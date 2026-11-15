@@ -31,9 +31,9 @@ public class ImplicitFromErrorVoidResultBenchmarks
     [Benchmark]
     public ResultRecordClass RecordClass_CreateErrors() => _error;
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ResultUnion Union_CreateErrors() => _error;
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ResultUnionCustom UnionCustom_CreateErrors() => _error;
 }

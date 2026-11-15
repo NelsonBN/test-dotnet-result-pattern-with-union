@@ -54,9 +54,9 @@ public class GettingErrorsValueResultBenchmarks
     [Benchmark]
     public ImmutableArray<Error> RecordClass_Errors() => _recordClass.Errors;
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ImmutableArray<Error> Union_Errors() => _union.Errors;
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ImmutableArray<Error> UnionCustom_Errors() => _unionCustom.Errors;
 }

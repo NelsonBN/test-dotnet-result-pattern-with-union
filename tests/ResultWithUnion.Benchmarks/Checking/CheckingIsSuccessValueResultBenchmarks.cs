@@ -92,7 +92,7 @@ public class CheckingIsSuccessValueResultBenchmarks
         return false;
     }
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public bool Union_IsSuccess()
     {
         if(_union.IsSuccess)
@@ -103,7 +103,7 @@ public class CheckingIsSuccessValueResultBenchmarks
         return false;
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public bool UnionCustom_IsSuccess()
     {
         if(_unionCustom.IsSuccess)

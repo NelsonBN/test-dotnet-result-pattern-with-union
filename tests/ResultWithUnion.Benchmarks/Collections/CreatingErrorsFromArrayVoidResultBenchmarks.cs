@@ -34,9 +34,9 @@ public class CreatingErrorsFromArrayVoidResultBenchmarks
     [Benchmark]
     public ResultRecordClass RecordClass_CreateErrors() => ResultRecordClass.From(_errors);
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ResultUnion Union_CreateErrors() => ResultUnion.From(_errors);
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ResultUnionCustom UnionCustom_CreateErrors() => ResultUnionCustom.From(_errors);
 }

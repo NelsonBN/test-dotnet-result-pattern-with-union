@@ -6,7 +6,7 @@ The question: *does a C# 15 `union` make a better Result type than the existing 
 
 ## Fair comparison
 
-The non-union variants (struct, readonly struct, record struct, class, record class) follow one nearly identical implementation: the same members, constructor overloads, storage (`ImmutableArray<Error>`), exceptions and benchmark inputs. The **union is the only variant allowed to differ** (the language does not let it declare fields, `Value` or constructors), and it is the **baseline** of every benchmark, so `Ratio` reads "variant vs union". The unavoidable differences are listed in `AGENTS.md` under *Intentional deviations*.
+The non-union variants (struct, readonly struct, record struct, class, record class) follow one nearly identical implementation: the same members, constructor overloads, storage (`ImmutableArray<Error>`), exceptions and benchmark inputs. The **union is the only variant allowed to differ** (the language does not let it declare fields, `Value` or constructors), while the hand-written non-boxing `ResultUnionCustom` is the **baseline** of every benchmark, so `Ratio` reads "variant vs custom union". The unavoidable differences are listed in `AGENTS.md` under *Intentional deviations*.
 
 ## Variants
 

@@ -74,13 +74,13 @@ public class TryGettingErrorsValueResultBenchmarks
         return errors;
     }
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ImmutableArray<Error> Union_TryGetErrors()
     {
         return _union is ImmutableArray<Error> errors ? errors : default;
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ImmutableArray<Error> UnionCustom_TryGetErrors()
     {
         _unionCustom.TryGetValue(out ImmutableArray<Error> errors);

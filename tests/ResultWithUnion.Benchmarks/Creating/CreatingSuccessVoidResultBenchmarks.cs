@@ -24,9 +24,9 @@ public class CreatingSuccessVoidResultBenchmarks
     [Benchmark]
     public ResultRecordClass RecordClass_CreateSuccess() => new();
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ResultUnion Union_CreateSuccess() => new();
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ResultUnionCustom UnionCustom_CreateSuccess() => new();
 }

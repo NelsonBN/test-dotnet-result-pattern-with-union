@@ -92,7 +92,7 @@ public class CheckingHasValueValueResultBenchmarks
         return false;
     }
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public bool Union_HasValue()
     {
         if(_union is not null)
@@ -103,7 +103,7 @@ public class CheckingHasValueValueResultBenchmarks
         return false;
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public bool UnionCustom_HasValue()
     {
         if(_unionCustom.HasValue)

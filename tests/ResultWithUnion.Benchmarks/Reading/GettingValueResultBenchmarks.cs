@@ -48,9 +48,9 @@ public class GettingValueResultBenchmarks
     [Benchmark]
     public FakeModel RecordClass_GetValue() => _recordClass.Value;
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public FakeModel Union_GetValue() => _union.GetValue();
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public FakeModel UnionCustom_GetValue() => _unionCustom.GetValue();
 }
