@@ -12,7 +12,7 @@ When they do not: pure logic, branching and mapping (unit tests), or "everything
 
 ## Conventions
 
-- Separate project `<Project>.IntegrationTests`, or the same project with `[Trait("Category", "Integration")]`; the script filters on the trait named in `quality-gate.json`.
+- Dedicated project `tests/<P>.IntegrationTests/<P>.IntegrationTests.csproj` (required for web/API projects, see [project-structure.md](project-structure.md)); files mirror the source folders and end in `IntegrationTests.cs`. Also tag the tests `[Trait("Category", "Integration")]` so they can be filtered.
 - Same AAA and Given_When_Then pattern as unit tests.
 - Each test owns its data and leaves nothing behind. Never depend on another test's data or on order.
 - No fixed ports or fixed names; use random ports and unique identifiers.
@@ -52,4 +52,4 @@ Replace external services with fakes through `WebApplicationFactory.WithWebHostB
 
 ## Run
 
-`dotnet test --project <test project> --filter-trait "Category=Integration"` (wrapped by `tests.cs integration`).
+`dotnet test --project <P>.IntegrationTests.csproj` (wrapped by `tests.cs integration`).

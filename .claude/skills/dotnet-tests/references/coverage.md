@@ -16,7 +16,7 @@ dotnet run .claude/skills/dotnet-tests/scripts/tests.cs -- coverage
 Equivalent manual commands:
 
 ```bash
-dotnet test --project <test project> --filter-not-trait "Category=Integration" --coverlet --coverlet-output-format cobertura --results-directory artifacts/dotnet-tests/results
+dotnet test --project <P>.Tests.csproj --coverlet --coverlet-output-format cobertura --results-directory artifacts/dotnet-tests/results
 reportgenerator -reports:"artifacts/dotnet-tests/results/**/*.cobertura*.xml" -targetdir:artifacts/dotnet-tests/coverage -reporttypes:"TextSummary;Cobertura;Html"
 ```
 
@@ -24,7 +24,7 @@ The script also passes `--coverlet-exclude-by-file` (migrations, `*.g.cs`, `obj`
 
 ## The gate
 
-Defaults in [../quality-gate.json](../quality-gate.json): **line 90%, branch 85%**. The script evaluates them on the files changed versus the default branch (the hook: versus `HEAD`), not on the whole solution, so legacy code does not block new work. Whole-solution numbers are printed for information.
+Defaults in [../quality-gate.json](../quality-gate.json): **line 90%, branch 85%**. Only `*.Tests` projects are run for coverage. The script evaluates the gate on the source files changed versus the default branch (the hook: versus `HEAD`), not on the whole solution, so legacy code does not block new work. Whole-solution numbers are printed for information.
 
 If a file fails the gate, the output lists the uncovered line ranges and branches; write tests for them, then re-run.
 

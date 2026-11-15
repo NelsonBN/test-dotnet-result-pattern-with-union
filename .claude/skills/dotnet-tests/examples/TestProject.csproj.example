@@ -29,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- tests/MyProject.Tests/MyProject.Tests.csproj (or tests/MyProject.IntegrationTests/...): reference only its own source project -->
     <ProjectReference Include="..\..\src\MyProject\MyProject.csproj" />
   </ItemGroup>
 

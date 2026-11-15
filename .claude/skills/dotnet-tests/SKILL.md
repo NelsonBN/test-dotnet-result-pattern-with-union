@@ -33,12 +33,13 @@ Every feature or fix ships with tests that prove it works and keep it working. W
 ## Core Rules
 
 1. **AAA.** Every test has `// Arrange`, `// Act`, `// Assert` sections, in that order, one Act per test.
-2. **Names:** `Given_<state>_When_<action>_Then_<outcome>`. One behaviour per test.
-3. **Assertions:** AwesomeAssertions (`.Should()`) only. A test without an assertion is a bug.
-4. **Deterministic.** No real clock, randomness, network or shared state without a fake. Tests run in any order and in parallel.
-5. **Test the contract, not the implementation.** Mock only boundaries (I/O, clock, external services) with NSubstitute; never mock the type under test or plain value objects.
-6. **Prove it can fail.** Each test must go red if the behaviour breaks. Confirm with mutation testing.
-7. Follow `.editorconfig` and the repo's `AGENTS.md`/`CLAUDE.md` style.
+2. **Structure:** one `*.Tests.csproj` per source project and one `*Tests.cs` per source file, same relative folder; `*.IntegrationTests.csproj` for web/API projects. The mapping is by name and is enforced.
+3. **Names:** `Given_<state>_When_<action>_Then_<outcome>`. One behaviour per test.
+4. **Assertions:** AwesomeAssertions (`.Should()`) only. A test without an assertion is a bug.
+5. **Deterministic.** No real clock, randomness, network or shared state without a fake. Tests run in any order and in parallel.
+6. **Test the contract, not the implementation.** Mock only boundaries (I/O, clock, external services) with NSubstitute; never mock the type under test or plain value objects.
+7. **Prove it can fail.** Each test must go red if the behaviour breaks. Confirm with mutation testing.
+8. Follow `.editorconfig` and the repo's `AGENTS.md`/`CLAUDE.md` style.
 
 ### NEVER
 
@@ -46,26 +47,27 @@ Every feature or fix ships with tests that prove it works and keep it working. W
 - **NEVER** use `[ExcludeFromCodeCoverage]`, coverage excludes, `[Fact(Skip=...)]`, `#if` or test deletion to pass the gate.
 - **NEVER** weaken or delete an assertion to make a test pass; fix the code or the expectation with a reason.
 - **NEVER** retry flaky tests blindly: fix the cause, or tell the user.
-- **NEVER** add a package or tool beyond the ones named here without asking (see [references/suggested-tools.md](references/suggested-tools.md)).
+- **NEVER** use `FluentAssertions`, `FluentAssertions.Web` or `Moq`, and **NEVER** add a package or tool beyond the ones listed as base in [references/suggested-tools.md](references/suggested-tools.md) without asking.
 - **NEVER** commit or push.
 
 ## Workflow
 
 Follow in order.
 
-1. **Locate** the test project (`Microsoft.NET.Test.Sdk` or `xunit` reference) and the existing conventions; mirror them. Create the project if missing.
+1. **Locate or create the mirror structure** ([references/project-structure.md](references/project-structure.md)): `src/<P>/<P>.csproj` has `tests/<P>.Tests/<P>.Tests.csproj` (plus `tests/<P>.IntegrationTests/<P>.IntegrationTests.csproj` for web/API projects), and `src/<P>/<Folder>/<Name>.cs` has `tests/<P>.Tests/<Folder>/<Name>Tests.cs`. Never one shared test project. Check with `<tests> structure`.
 2. **List behaviours** for the feature: happy path, boundaries, invalid input (null, empty, out of range), failure paths, ordering/concurrency when relevant. Each becomes a test. See [references/test-pattern.md](references/test-pattern.md).
 3. **Unit tests first** (red, then green). See [references/unit-tests.md](references/unit-tests.md) and [examples/UnitTest.cs.example](examples/UnitTest.cs.example).
-4. **Narrow integration tests** only where a unit test cannot prove the behaviour (database, HTTP pipeline, serialization, messaging). Tag them `[Trait("Category", "Integration")]`. See [references/integration-tests.md](references/integration-tests.md).
+4. **Narrow integration tests** only where a unit test cannot prove the behaviour (database, HTTP pipeline, serialization, messaging). Put them in the `<P>.IntegrationTests` project, tagged `[Trait("Category", "Integration")]`. See [references/integration-tests.md](references/integration-tests.md).
 5. **Run** the deterministic commands:
 
    | Goal | Command |
    |------|---------|
+   | Mirror structure check | `<tests> structure` |
    | Unit tests | `<tests> unit` |
    | Integration tests | `<tests> integration` |
    | Coverage gate | `<tests> coverage` |
    | Mutation (changed files) | `<tests> mutation` |
-   | Unit + coverage (what the hook runs) | `<tests> all` |
+   | Structure + unit + coverage (what the hook runs) | `<tests> all` |
 
    Outputs go to `artifacts/dotnet-tests/`. Exit codes: `0` pass, `1` gate or test failure, `2` tooling error (fix the environment, not the gate).
 6. **Coverage gate** ([references/coverage.md](references/coverage.md)): changed code must reach the thresholds in [quality-gate.json](quality-gate.json). Add tests for the uncovered lines and branches listed in the output.
@@ -78,6 +80,7 @@ Follow in order.
 | Invocation | Meaning |
 |------------|---------|
 | `/dotnet-tests` or `all` | Steps 1 to 9 for the current change |
+| `structure` | Check the mirror project and file convention only |
 | `unit` / `integration` | Run only that category |
 | `coverage` | Run the coverage gate |
 | `mutation` | Run Stryker on files changed vs the default branch |
@@ -87,16 +90,17 @@ Follow in order.
 A `Stop` hook (`.claude/settings.json`) runs `<tests> hook stop` when the agent tries to end its turn:
 
 - No-op when there are no changed `.cs` files, no test project, or `DOTNET_TESTS_HOOK=off`.
-- Otherwise it runs the unit tests and the coverage gate on changed code. A failing test or coverage below the gate blocks the stop and hands the list of failures and uncovered lines back; continue from workflow step 3.
+- Otherwise it checks the mirror structure, then runs the unit tests and the coverage gate on changed code. A missing test project or file (with its exact expected path), a failing test, or coverage below the gate blocks the stop and hands the list back; continue from workflow step 1.
 - Mutation is never run by the hook (too slow); run it on demand.
 - After 3 consecutive blocks it lets the agent stop with a warning, so it cannot loop forever.
 
 ## References (load on demand)
 
+- [references/project-structure.md](references/project-structure.md): the mirror project and file convention, what is exempt, how it is enforced
 - [references/test-pattern.md](references/test-pattern.md): AAA, naming, layout, builders, data-driven tests
 - [references/unit-tests.md](references/unit-tests.md): xunit, AwesomeAssertions, NSubstitute test doubles
 - [references/integration-tests.md](references/integration-tests.md): when and how, Testcontainers, HTTP, isolation
 - [references/mutation-tests.md](references/mutation-tests.md): Stryker config, reading and killing survivors
 - [references/coverage.md](references/coverage.md): coverlet, ReportGenerator, what may be excluded
 - [references/quality-gate.md](references/quality-gate.md): thresholds, definition of done, smells, flaky policy, CI
-- [references/suggested-tools.md](references/suggested-tools.md): extra tools to propose to the user (ask first)
+- [references/suggested-tools.md](references/suggested-tools.md): every tool (always vs specific cases), optional extras to propose (ask first) and tools never to use

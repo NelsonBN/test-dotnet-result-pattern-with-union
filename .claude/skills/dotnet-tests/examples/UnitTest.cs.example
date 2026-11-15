@@ -1,4 +1,5 @@
 // Example only (not compiled): unit tests in the dotnet-tests pattern.
+// Path: tests/Payments.Tests/PaymentServiceTests.cs  (mirrors src/Payments/PaymentService.cs)
 // Subject: a PaymentService that charges through an IPaymentGateway and records through an IAuditLog.
 using AwesomeAssertions;
 using NSubstitute;

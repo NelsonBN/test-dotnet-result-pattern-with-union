@@ -6,6 +6,7 @@ Stored in [../quality-gate.json](../quality-gate.json); never lowered without th
 
 | Metric | Default | Checked by |
 |--------|---------|------------|
+| Mirror project and file structure | required | Stop hook, `structure`, `all` |
 | All tests pass | required | Stop hook, `all` |
 | Line coverage (changed files) | 90% | Stop hook, `coverage` |
 | Branch coverage (changed files) | 85% | Stop hook, `coverage` |
@@ -13,6 +14,7 @@ Stored in [../quality-gate.json](../quality-gate.json); never lowered without th
 
 ## Definition of done
 
+- [ ] Mirror structure holds (`tests.cs structure` passes): a `<P>.Tests` project per source project, a `<Name>Tests.cs` per source file, `<P>.IntegrationTests` for web/API projects.
 - [ ] Every new or changed behaviour has a test; bug fixes have a regression test that failed before the fix.
 - [ ] Tests follow AAA and Given_When_Then, one behaviour each, AwesomeAssertions only.
 - [ ] Unit tests are fast and deterministic; integration tests only where needed and tagged.

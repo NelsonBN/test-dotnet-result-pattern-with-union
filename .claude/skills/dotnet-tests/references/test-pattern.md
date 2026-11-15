@@ -36,8 +36,8 @@ The name states the behaviour; if you need "and" in the name, split the test.
 
 ## Layout
 
-- Test project per production project: `<Project>.Tests` (unit) and, when needed, `<Project>.IntegrationTests`.
-- Mirror the production namespace and folder; one test class per unit under test: `OrderService` is tested by `OrderServiceTests`.
+- Project and file mirror structure: see [project-structure.md](project-structure.md) (`src/<P>/<Folder>/<Name>.cs` is tested by `tests/<P>.Tests/<Folder>/<Name>Tests.cs`).
+- One test class per unit under test: `OrderService` is tested by `OrderServiceTests`, in the namespace `<P>.Tests.<Folder>`.
 - Group by method with nested classes only when a class exceeds roughly 20 tests.
 - Shared helpers live in `Builders/`, `Fakes/` and `Fixtures/` inside the test project.
 

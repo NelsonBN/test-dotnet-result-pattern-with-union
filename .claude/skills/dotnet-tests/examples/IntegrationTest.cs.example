@@ -1,3 +1,4 @@
+// Path: tests/Orders.IntegrationTests/Endpoints/OrdersEndpointIntegrationTests.cs  (project Orders.IntegrationTests)
 // Example only (not compiled): a narrow integration test with a real PostgreSQL (Testcontainers)
 // behind the in-process API (WebApplicationFactory), asserted with Assertions.Web.
 using System.Net.Http.Json;

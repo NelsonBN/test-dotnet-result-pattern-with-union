@@ -11,6 +11,7 @@ using System.Xml.Linq;
 // Deterministic test runner and quality gate for a .NET repository, and the Stop hook that enforces it.
 // Single-file C# app: `dotnet run tests.cs -- <command>` (any OS, only the .NET SDK is required).
 //
+//   tests.cs structure            check that every changed source file has its mirror test project and file
 //   tests.cs unit                 run the unit tests (everything not tagged Category=Integration)
 //   tests.cs integration          run the integration tests (Category=Integration); checks Docker first
 //   tests.cs coverage             run the unit tests with coverage and evaluate the gate on the changed files
@@ -26,7 +27,7 @@ return TestRunner.Run(args);
 
 sealed class ToolException(string message) : Exception(message);
 
-sealed record Gate(double LineCoverage, double BranchCoverage, double MutationScore, string IntegrationTrait);
+sealed record Gate(double LineCoverage, double BranchCoverage, double MutationScore, string UnitSuffix, string IntegrationSuffix, string IntegrationTrait, string[] StructureIgnore);
 
 sealed record FileCoverage(string File, int Lines, int LinesCovered, int Branches, int BranchesCovered, List<int> Uncovered)
 {
@@ -68,13 +69,14 @@ static class TestRunner
 
             return command switch
             {
+                "structure" => RunStructure(gate, baseRef),
                 "unit" => RunTests(integration: false),
                 "integration" => RunTests(integration: true),
                 "coverage" => RunCoverage(gate, baseRef),
                 "mutation" => RunMutation(gate, baseRef),
-                "all" => Combine(RunTests(integration: false), () => RunCoverage(gate, baseRef)),
+                "all" => Combine(Combine(RunStructure(gate, baseRef), () => RunTests(integration: false)), () => RunCoverage(gate, baseRef)),
                 "--report" => WriteReport(),
-                _ => throw new ToolException("usage: unit | integration | coverage | mutation | all | --report | hook stop"),
+                _ => throw new ToolException("usage: structure | unit | integration | coverage | mutation | all | --report | hook stop"),
             };
         }
         catch (ToolException e)
@@ -103,7 +105,14 @@ static class TestRunner
         var path = Path.Combine(ScriptDir(), "..", "quality-gate.json");
         using var document = JsonDocument.Parse(File.ReadAllText(path));
         var r = document.RootElement;
-        return new Gate(r.GetProperty("lineCoverage").GetDouble(), r.GetProperty("branchCoverage").GetDouble(), r.GetProperty("mutationScore").GetDouble(), r.GetProperty("integrationTrait").GetString() ?? "Integration");
+        return new Gate(
+            r.GetProperty("lineCoverage").GetDouble(),
+            r.GetProperty("branchCoverage").GetDouble(),
+            r.GetProperty("mutationScore").GetDouble(),
+            r.GetProperty("unitSuffix").GetString() ?? ".Tests",
+            r.GetProperty("integrationSuffix").GetString() ?? ".IntegrationTests",
+            r.GetProperty("integrationTrait").GetString() ?? "Integration",
+            r.GetProperty("structureIgnore").EnumerateArray().Select(e => e.GetString() ?? "").ToArray());
     }
 
     static string DefaultBase()
@@ -137,11 +146,39 @@ static class TestRunner
         }
     }
 
-    static List<string> TestProjects() =>
-        ProjectFiles().Where(p => Regex.IsMatch(File.ReadAllText(p), "Microsoft\\.NET\\.Test\\.Sdk|xunit", RegexOptions.IgnoreCase)).ToList();
+    static List<string> UnitProjects() =>
+        ProjectFiles().Where(p => Path.GetFileNameWithoutExtension(p).EndsWith(LoadGate().UnitSuffix, StringComparison.OrdinalIgnoreCase)).ToList();
 
-    // Changed .cs files (committed since <baseRef>, staged, unstaged, untracked), minus files that live in a test project.
-    static List<string> ChangedSourceFiles(string baseRef, List<string> testProjects)
+    static List<string> IntegrationProjects() =>
+        ProjectFiles().Where(p => Path.GetFileNameWithoutExtension(p).EndsWith(LoadGate().IntegrationSuffix, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    static List<string> AllTestProjects() => UnitProjects().Concat(IntegrationProjects()).ToList();
+
+    // Source projects live under a top-level `src` folder and are not test projects (benchmarks and tools elsewhere are out of scope).
+    static List<string> SourceProjects()
+    {
+        var tests = AllTestProjects();
+        var src = Path.GetFullPath("src") + Path.DirectorySeparatorChar;
+        return ProjectFiles().Where(p => !tests.Contains(p) && p.StartsWith(src, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    // The source project that owns a file: the nearest ancestor folder holding a source .csproj.
+    static string? OwningProject(string file, List<string> sources)
+    {
+        for (var dir = Path.GetDirectoryName(file); !string.IsNullOrEmpty(dir); dir = Path.GetDirectoryName(dir))
+        {
+            var match = sources.FirstOrDefault(p => string.Equals(Path.GetDirectoryName(p), dir, StringComparison.OrdinalIgnoreCase));
+            if (match is not null)
+            {
+                return match;
+            }
+        }
+
+        return null;
+    }
+
+    // Changed .cs files (committed since <baseRef>, staged, unstaged, untracked) that belong to a source project.
+    static List<string> ChangedSourceFiles(string baseRef)
     {
         var names = new HashSet<string>();
         foreach (var line in (Git("diff", "--name-only", "--diff-filter=d", baseRef) ?? "").Split('\n'))
@@ -154,15 +191,93 @@ static class TestRunner
             names.Add(line.Trim());
         }
 
-        var testDirs = testProjects.Select(p => Path.GetDirectoryName(p)! + Path.DirectorySeparatorChar).ToList();
+        var sources = SourceProjects();
         return names
             .Where(n => n.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
             .Select(n => Path.GetFullPath(n))
             .Where(File.Exists)
-            .Where(n => !testDirs.Any(d => n.StartsWith(d, StringComparison.OrdinalIgnoreCase)))
+            .Where(n => OwningProject(n, sources) is not null)
             .Where(n => !Regex.IsMatch(n, "[\\\\/](bin|obj|Migrations)[\\\\/]|\\.g\\.cs$|\\.Designer\\.cs$"))
             .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+
+    // ---------------------------------------------------------------- Structure (mirror projects and files)
+
+    static bool IsIgnored(string relative, string[] patterns)
+    {
+        var path = relative.Replace('\\', '/');
+        foreach (var pattern in patterns)
+        {
+            var regex = "^" + Regex.Escape(pattern).Replace("\\*\\*", "\u0000").Replace("\\*", "[^/]*").Replace("\u0000", ".*") + "$";
+            var target = pattern.Contains('/') || pattern.EndsWith("/**", StringComparison.Ordinal) ? path : Path.GetFileName(path);
+            if (Regex.IsMatch(target, regex) || (pattern.EndsWith("/**", StringComparison.Ordinal) && path.StartsWith(pattern[..^2], StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Interface, enum and delegate only files carry no behaviour to test.
+    static bool DeclaresNoBehaviour(string file)
+    {
+        var text = Regex.Replace(File.ReadAllText(file), "//.*|/\\*[\\s\\S]*?\\*/", "");
+        return !Regex.IsMatch(text, "\\b(class|struct|record)\\s+\\w");
+    }
+
+    static List<string> CheckStructure(Gate gate, string baseRef)
+    {
+        var sources = SourceProjects();
+        var units = UnitProjects();
+        var integrations = IntegrationProjects();
+        var findings = new List<string>();
+        var reported = new HashSet<string>();
+        foreach (var file in ChangedSourceFiles(baseRef))
+        {
+            var project = OwningProject(file, sources)!;
+            var name = Path.GetFileNameWithoutExtension(project);
+            var relative = Path.GetRelativePath(Path.GetDirectoryName(project)!, file);
+            if (IsIgnored(relative, gate.StructureIgnore) || DeclaresNoBehaviour(file))
+            {
+                continue;
+            }
+
+            var unit = units.FirstOrDefault(p => string.Equals(Path.GetFileNameWithoutExtension(p), name + gate.UnitSuffix, StringComparison.OrdinalIgnoreCase));
+            var unitDir = unit is null ? Path.Combine(Path.GetFullPath("tests"), name + gate.UnitSuffix) : Path.GetDirectoryName(unit)!;
+            if (unit is null && reported.Add("unit:" + name))
+            {
+                findings.Add($"missing test project  {Rel(Path.Combine(unitDir, name + gate.UnitSuffix + ".csproj"))}  (for {Rel(project)})");
+            }
+
+            var expected = Path.Combine(unitDir, Path.GetDirectoryName(relative) ?? "", Path.GetFileNameWithoutExtension(file) + "Tests.cs");
+            if (!File.Exists(expected))
+            {
+                findings.Add($"missing test file     {Rel(expected)}  (for {Rel(file)})");
+            }
+
+            var text = File.ReadAllText(project);
+            var isWeb = text.Contains("Microsoft.NET.Sdk.Web", StringComparison.Ordinal) || text.Contains("Microsoft.AspNetCore", StringComparison.Ordinal);
+            var hasIntegration = integrations.Any(p => string.Equals(Path.GetFileNameWithoutExtension(p), name + gate.IntegrationSuffix, StringComparison.OrdinalIgnoreCase));
+            if (isWeb && !hasIntegration && reported.Add("integration:" + name))
+            {
+                findings.Add($"missing integration   {Rel(Path.Combine(Path.GetFullPath("tests"), name + gate.IntegrationSuffix, name + gate.IntegrationSuffix + ".csproj"))}  ({name} is a web project)");
+            }
+        }
+
+        return findings;
+    }
+
+    static string Rel(string path) => Path.GetRelativePath(".", path).Replace('\\', '/');
+
+    static int RunStructure(Gate gate, string baseRef)
+    {
+        var findings = CheckStructure(gate, baseRef);
+        findings.ForEach(Out.WriteLine);
+        Out.WriteLine(findings.Count == 0 ? "PASS structure (every changed source file has its mirror test file)" : $"FAIL structure: {findings.Count} gap(s); see references/project-structure.md");
+        SaveSection("structure", new { passed = findings.Count == 0, findings });
+        return findings.Count == 0 ? 0 : 1;
     }
 
     // ---------------------------------------------------------------- Process helpers
@@ -229,13 +344,13 @@ static class TestRunner
 
     static int RunTests(bool integration)
     {
-        var projects = TestProjects();
+        var gate = LoadGate();
+        var projects = integration ? IntegrationProjects() : UnitProjects();
         if (projects.Count == 0)
         {
-            throw new ToolException("no test project found (a .csproj referencing Microsoft.NET.Test.Sdk or xunit). Create one from examples/TestProject.csproj.example.");
+            throw new ToolException($"no {(integration ? "integration" : "unit")} test project found (expected a *{(integration ? gate.IntegrationSuffix : gate.UnitSuffix)}.csproj). See references/project-structure.md.");
         }
 
-        var trait = LoadGate().IntegrationTrait;
         if (integration)
         {
             var docker = TryExec("docker", "info");
@@ -245,12 +360,11 @@ static class TestRunner
             }
         }
 
-        var filter = integration ? "--filter-trait" : "--filter-not-trait";
         var exitCode = 0;
         var failures = new List<string>();
         foreach (var project in projects)
         {
-            var (exit, output) = ExecLogged(integration ? "integration.log" : "unit.log", "dotnet", ["test", "--project", project, filter, $"Category={trait}"]);
+            var (exit, output) = ExecLogged(integration ? "integration.log" : "unit.log", "dotnet", ["test", "--project", project]);
             Out.WriteLine($"{(exit == 0 ? "PASS" : "FAIL")} {Path.GetFileName(project)} ({(integration ? "integration" : "unit")})");
             if (exit != 0)
             {
@@ -286,10 +400,10 @@ static class TestRunner
 
     static (bool Passed, List<FileCoverage> Failing, List<string> Messages) EvaluateCoverage(Gate gate, string baseRef, string resultsDir)
     {
-        var projects = TestProjects();
+        var projects = UnitProjects();
         if (projects.Count == 0)
         {
-            throw new ToolException("no test project found; cannot measure coverage.");
+            throw new ToolException($"no unit test project found (expected a *{gate.UnitSuffix}.csproj); cannot measure coverage.");
         }
 
         if (Directory.Exists(resultsDir))
@@ -301,7 +415,7 @@ static class TestRunner
         {
             List<string> arguments =
             [
-                "test", "--project", project, "--filter-not-trait", $"Category={gate.IntegrationTrait}",
+                "test", "--project", project,
                 "--coverlet", "--coverlet-output-format", "cobertura", "--coverlet-file-prefix", Path.GetFileNameWithoutExtension(project),
                 "--coverlet-exclude-by-file", "**/Migrations/**", "**/*.g.cs", "**/obj/**",
                 "--coverlet-exclude-by-attribute", "GeneratedCode", "CompilerGenerated",
@@ -324,7 +438,7 @@ static class TestRunner
         }
 
         var coverage = ParseCobertura(reports);
-        var changed = ChangedSourceFiles(baseRef, projects);
+        var changed = ChangedSourceFiles(baseRef);
         var messages = new List<string>();
         var failing = new List<FileCoverage>();
         foreach (var file in changed)
@@ -439,10 +553,10 @@ static class TestRunner
 
     static int RunMutation(Gate gate, string baseRef)
     {
-        var projects = TestProjects();
+        var projects = UnitProjects();
         if (projects.Count == 0)
         {
-            throw new ToolException("no test project found; cannot run mutation tests.");
+            throw new ToolException($"no unit test project found (expected a *{gate.UnitSuffix}.csproj); cannot run mutation tests.");
         }
 
         if (TryExec("dotnet", "stryker", "--version") != 0)
@@ -450,7 +564,7 @@ static class TestRunner
             throw new ToolException("dotnet-stryker is not installed (dotnet tool install -g dotnet-stryker).");
         }
 
-        if (ChangedSourceFiles(baseRef, projects).Count == 0)
+        if (ChangedSourceFiles(baseRef).Count == 0)
         {
             Out.WriteLine("No changed source files to mutate.");
             SaveSection("mutation", new { passed = true, note = "nothing to mutate" });
@@ -461,7 +575,7 @@ static class TestRunner
         foreach (var project in projects)
         {
             var dir = Path.GetDirectoryName(project)!;
-            var arguments = new List<string> { "stryker", "--since:" + baseRef, "--threshold-break", gate.MutationScore.ToString("F0"), "--output", Path.GetFullPath($"{StateDir}/mutation") };
+            var arguments = new List<string> { "stryker", "--since:" + baseRef, "--threshold-break", gate.MutationScore.ToString("F0"), "--output", Path.GetFullPath($"{StateDir}/mutation"), "--project", Path.GetFileNameWithoutExtension(project)[..^gate.UnitSuffix.Length] + ".csproj" };
             if (File.Exists(Path.Combine(dir, "stryker-config.json")))
             {
                 arguments.AddRange(["--config-file", "stryker-config.json"]);
@@ -499,7 +613,7 @@ static class TestRunner
 
         var sections = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(File.ReadAllText(path)) ?? [];
         var report = new StringBuilder("# dotnet-tests report\n\n| Step | Result |\n|------|--------|\n");
-        foreach (var name in new[] { "unit", "integration", "coverage", "mutation" })
+        foreach (var name in new[] { "structure", "unit", "integration", "coverage", "mutation" })
         {
             if (sections.TryGetValue(name, out var s))
             {
@@ -566,8 +680,8 @@ static class TestRunner
             }
 
             Directory.SetCurrentDirectory(root.Trim());
-            var projects = TestProjects();
-            var changed = projects.Count == 0 ? [] : ChangedSourceFiles("HEAD", projects);
+            var projects = AllTestProjects();
+            var changed = projects.Count == 0 ? [] : ChangedSourceFiles("HEAD");
             if (changed.Count == 0)
             {
                 return 0;
@@ -594,10 +708,11 @@ static class TestRunner
             var reason = "";
             try
             {
-                var unitExit = RunTests(integration: false);
+                var gate = LoadGate();
+                var unitExit = RunStructure(gate, "HEAD") == 0 ? RunTests(integration: false) : 1;
                 if (unitExit == 0)
                 {
-                    var result = EvaluateCoverage(LoadGate(), "HEAD", $"{StateDir}/hook/results");
+                    var result = EvaluateCoverage(gate, "HEAD", $"{StateDir}/hook/results");
                     if (result.Passed)
                     {
                         SaveHookState(new HookState(fingerprint, "", 0));
@@ -627,8 +742,8 @@ static class TestRunner
     {
         var lines = output.Split('\n').Select(l => l.TrimEnd()).Where(l => l.Length > 0).Take(30);
         return string.Join("\n",
-            "dotnet-tests: the changed code is not verified. The turn cannot end until the unit tests pass and each changed file meets the coverage gate.",
-            "Follow the dotnet-tests skill (.claude/skills/dotnet-tests/SKILL.md) from workflow step 3: fix failing tests, then add tests for the uncovered lines and branches below.",
+            "dotnet-tests: the changed code is not verified. The turn cannot end until every changed source file has its mirror test file, the unit tests pass and each changed file meets the coverage gate.",
+            "Follow the dotnet-tests skill (.claude/skills/dotnet-tests/SKILL.md) from workflow step 1: create the missing mirror test projects and files (references/project-structure.md), fix failing tests, then add tests for the uncovered lines and branches below.",
             "Never lower quality-gate.json, skip tests or add coverage excludes.",
             $"Then re-run until it exits 0: {SelfCommand} all",
             "Output:",

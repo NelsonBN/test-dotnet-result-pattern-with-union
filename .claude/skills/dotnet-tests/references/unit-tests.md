@@ -11,7 +11,7 @@
 | `NSubstitute` | Test doubles |
 | `coverlet.MTP` | Coverage on Microsoft.Testing.Platform (see [coverage.md](coverage.md)) |
 
-xunit v3 runs on Microsoft.Testing.Platform (MTP). With the .NET 10+ SDK, `dotnet test` must opt in through `global.json` (`"test": { "runner": "Microsoft.Testing.Platform" }`), otherwise it fails with "Testing with VSTest target is no longer supported". On MTP, pass the project with `--project` and filter by trait with `--filter-trait` / `--filter-not-trait`.
+xunit v3 runs on Microsoft.Testing.Platform (MTP). With the .NET 10+ SDK, `dotnet test` must opt in through `global.json` (`"test": { "runner": "Microsoft.Testing.Platform" }`), otherwise it fails with "Testing with VSTest target is no longer supported". On MTP, pass the project with `--project`; filter by trait with `--filter-trait` / `--filter-not-trait`.
 
 Full project file: [../examples/TestProject.csproj.example](../examples/TestProject.csproj.example).
 
@@ -23,7 +23,7 @@ Fast (milliseconds), in-process, no network, disk, database or clock. Tests one 
 
 - `[Fact]` single case, `[Theory]` + data for variations.
 - A new class instance per test: use the constructor for setup, `IDisposable`/`IAsyncLifetime` for cleanup. Use `IClassFixture<T>` only for expensive, read-only shared state.
-- `[Trait("Category", "Integration")]` marks integration tests; unit tests carry no trait.
+- Unit tests live in `*.Tests` projects and carry no trait; integration tests live in `*.IntegrationTests` projects and carry `[Trait("Category", "Integration")]`.
 - Use `Assert` only for what AwesomeAssertions cannot express; do not mix styles inside one test.
 
 ## AwesomeAssertions
