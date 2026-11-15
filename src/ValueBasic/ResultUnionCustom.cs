@@ -25,7 +25,7 @@ public readonly struct ResultUnionCustom<T> : IUnion
     }
 
     public ResultUnionCustom(ImmutableArray<Error> errors)
-        => _errors = errors;
+        => _errors = errors.IsDefault ? ImmutableArray<Error>.Empty : errors;
 
     public readonly bool IsSuccess { get; }
 
