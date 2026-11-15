@@ -33,6 +33,20 @@ public readonly struct ResultUnionCustom<T> : IUnion
         ? _value
         : _errors.IsDefault ? null : _errors;
 
+    public bool HasValue => IsSuccess || !_errors.IsDefault;
+
+    public bool TryGetValue(out T value)
+    {
+        value = _value!;
+        return IsSuccess;
+    }
+
+    public bool TryGetValue(out ImmutableArray<Error> value)
+    {
+        value = _errors;
+        return !IsSuccess && !_errors.IsDefault;
+    }
+
     public T GetValue() => IsSuccess
         ? _value!
         : throw new InvalidOperationException("Value can be retrieved only when the result is not an error");

@@ -17,6 +17,14 @@ public readonly struct ResultUnionCustom : IUnion
 
     public object? Value => IsSuccess ? null : _errors;
 
+    public bool HasValue => !IsSuccess;
+
+    public bool TryGetValue(out ImmutableArray<Error> value)
+    {
+        value = _errors;
+        return !IsSuccess;
+    }
+
     public bool IsSuccess => _errors.IsDefault;
 
     public ImmutableArray<Error> Errors => IsSuccess
