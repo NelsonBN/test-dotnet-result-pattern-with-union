@@ -20,6 +20,8 @@ Each variant exists as a value result (`src/ValueBasic/`, `Result<Variant><TValu
 
 Failed results accept a single `Error` or a collection of errors: `Error[]`, `List<Error>`, `ImmutableArray<Error>`, `ReadOnlySpan<Error>` and any `IEnumerable<Error>` (sets, queues, lazy sequences; dictionaries are not supported). The errors are copied once into an immutable array. The union uses `From(...)` helpers for the same collections.
 
+**Union limitation:** `ResultUnion<T>` cannot represent a `T` that overlaps `Error` or `ImmutableArray<Error>` (such as `object`), nor a `null` success value; the non-union value results accept both. The comparison covers non-null, non-overlapping payloads.
+
 ## Benchmarks
 
 Benchmarks live in `tests/ResultWithUnion.Benchmarks/` (`ValueBasic/` and `VoidBasic/`):

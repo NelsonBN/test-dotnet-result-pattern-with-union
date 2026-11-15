@@ -41,6 +41,7 @@ Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultC
 ### Union pitfalls
 
 - A union lowers to a struct with one `object? Value` field; value-type cases are boxed.
+- **Value payload limitation** (`ResultUnion<T>`): `T` must not overlap `Error` or `ImmutableArray<Error>` (e.g. `object`), because the union cannot tell which case was intended; a `T` of `object` can report `IsSuccess` for an error. A `null` success payload is also read as a failure and `GetValue()` throws, whereas the non-union value results accept it. Value-result comparisons therefore apply to non-null, non-overlapping payloads.
 - Always add a `null => ...` arm to `switch` expressions (`default` has null contents).
 - Helpers (`IsSuccess`, `Match`, ...) are hand-written; the union adds no equality or deconstruction.
 - Runtime types (`UnionAttribute`, `IUnion`) ship with .NET 11, hence net11 only.
