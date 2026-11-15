@@ -30,7 +30,7 @@ public class CheckingIsSuccessVoidResultBenchmarks
         _readonlyStruct = Success ? new() : new(error);
         _class = Success ? new() : new(error);
         _recordClass = Success ? new() : new(error);
-        _union = Success ? new() : error;
+        _union = Success ? new ResultUnion() : error;
     }
 
     [Benchmark]
