@@ -1,0 +1,15 @@
+{
+  "lineCoverage": 90,
+  "branchCoverage": 85,
+  "mutationScore": 80,
+  "unitSuffix": ".Tests",
+  "integrationSuffix": ".IntegrationTests",
+  "integrationTrait": "Integration",
+  "structureIgnore": [
+    "Program.cs",
+    "AssemblyInfo.cs",
+    "*.g.cs",
+    "*.Designer.cs",
+    "Migrations/**"
+  ]
+}
