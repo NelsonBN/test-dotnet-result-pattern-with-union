@@ -23,6 +23,8 @@ public union ResultUnion<T>(T, ImmutableArray<Error>)
         null => ImmutableArray<Error>.Empty,
     };
 
+    public static ResultUnion<T> From(Error error) => new(ImmutableArray.Create(error));
+
     public static ResultUnion<T> From(Error[] errors) => new(ImmutableArray.Create(errors.AsSpan()));
 
     public static ResultUnion<T> From(List<Error> errors) => new(ImmutableArray.Create(CollectionsMarshal.AsSpan(errors)));

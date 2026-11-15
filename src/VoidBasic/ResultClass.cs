@@ -27,23 +27,11 @@ public sealed class ResultClass
 
     public static ResultClass From(Error error) => new(ImmutableArray.Create(error));
 
-    public ResultClass(Error[] errors)
-        : this(ImmutableArray.Create(errors.AsSpan()))
-    {
-    }
+    public static ResultClass From(Error[] errors) => new(ImmutableArray.Create(errors.AsSpan()));
 
-    public ResultClass(List<Error> errors)
-        : this(ImmutableArray.Create(CollectionsMarshal.AsSpan(errors)))
-    {
-    }
+    public static ResultClass From(List<Error> errors) => new(ImmutableArray.Create(CollectionsMarshal.AsSpan(errors)));
 
-    public ResultClass(IEnumerable<Error> errors)
-        : this(ErrorCollection.Create(errors))
-    {
-    }
+    public static ResultClass From(IEnumerable<Error> errors) => new(ErrorCollection.Create(errors));
 
-    public ResultClass(params ReadOnlySpan<Error> errors)
-        : this(ImmutableArray.Create(errors))
-    {
-    }
+    public static ResultClass From(params ReadOnlySpan<Error> errors) => new(ImmutableArray.Create(errors));
 }

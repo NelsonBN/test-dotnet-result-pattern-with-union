@@ -34,23 +34,11 @@ public record struct ResultRecordStruct<TValue>
 
     public static ResultRecordStruct<TValue> From(Error error) => new(ImmutableArray.Create(error));
 
-    public ResultRecordStruct(Error[] errors)
-        : this(ImmutableArray.Create(errors.AsSpan()))
-    {
-    }
+    public static ResultRecordStruct<TValue> From(Error[] errors) => new(ImmutableArray.Create(errors.AsSpan()));
 
-    public ResultRecordStruct(List<Error> errors)
-        : this(ImmutableArray.Create(CollectionsMarshal.AsSpan(errors)))
-    {
-    }
+    public static ResultRecordStruct<TValue> From(List<Error> errors) => new(ImmutableArray.Create(CollectionsMarshal.AsSpan(errors)));
 
-    public ResultRecordStruct(IEnumerable<Error> errors)
-        : this(ErrorCollection.Create(errors))
-    {
-    }
+    public static ResultRecordStruct<TValue> From(IEnumerable<Error> errors) => new(ErrorCollection.Create(errors));
 
-    public ResultRecordStruct(params ReadOnlySpan<Error> errors)
-        : this(ImmutableArray.Create(errors))
-    {
-    }
+    public static ResultRecordStruct<TValue> From(params ReadOnlySpan<Error> errors) => new(ImmutableArray.Create(errors));
 }

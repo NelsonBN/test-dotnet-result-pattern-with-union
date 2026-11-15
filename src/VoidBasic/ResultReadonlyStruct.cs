@@ -27,23 +27,11 @@ public readonly struct ResultReadonlyStruct
 
     public static ResultReadonlyStruct From(Error error) => new(ImmutableArray.Create(error));
 
-    public ResultReadonlyStruct(Error[] errors)
-        : this(ImmutableArray.Create(errors.AsSpan()))
-    {
-    }
+    public static ResultReadonlyStruct From(Error[] errors) => new(ImmutableArray.Create(errors.AsSpan()));
 
-    public ResultReadonlyStruct(List<Error> errors)
-        : this(ImmutableArray.Create(CollectionsMarshal.AsSpan(errors)))
-    {
-    }
+    public static ResultReadonlyStruct From(List<Error> errors) => new(ImmutableArray.Create(CollectionsMarshal.AsSpan(errors)));
 
-    public ResultReadonlyStruct(IEnumerable<Error> errors)
-        : this(ErrorCollection.Create(errors))
-    {
-    }
+    public static ResultReadonlyStruct From(IEnumerable<Error> errors) => new(ErrorCollection.Create(errors));
 
-    public ResultReadonlyStruct(params ReadOnlySpan<Error> errors)
-        : this(ImmutableArray.Create(errors))
-    {
-    }
+    public static ResultReadonlyStruct From(params ReadOnlySpan<Error> errors) => new(ImmutableArray.Create(errors));
 }

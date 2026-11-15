@@ -11,34 +11,34 @@ namespace ResultWithUnion.Benchmarks.Tests;
 [MemoryDiagnoser]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-public class CreatingErrorsFromHashSetValueResultBenchmarks
+public class CreatingErrorsFromListValueResultBenchmarks
 {
     private const int ErrorsCount = 5;
 
-    private HashSet<Error> _errors = default!;
+    private List<Error> _errors = default!;
 
     [GlobalSetup]
     public void Setup()
         => _errors = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new Error($"fake{index}"))];
 
     [Benchmark]
-    public ResultRecordStruct<FakeModel> RecordStruct_CreateErrors() => new(_errors);
+    public ResultRecordStruct<FakeModel> RecordStruct_CreateErrors() => ResultRecordStruct<FakeModel>.From(_errors);
 
     [Benchmark]
-    public ResultStruct<FakeModel> Struct_CreateErrors() => new(_errors);
+    public ResultStruct<FakeModel> Struct_CreateErrors() => ResultStruct<FakeModel>.From(_errors);
 
     [Benchmark]
-    public ResultReadonlyStruct<FakeModel> ReadonlyStruct_CreateErrors() => new(_errors);
+    public ResultReadonlyStruct<FakeModel> ReadonlyStruct_CreateErrors() => ResultReadonlyStruct<FakeModel>.From(_errors);
 
     [Benchmark]
-    public ResultClass<FakeModel> Class_CreateErrors() => new(_errors);
+    public ResultClass<FakeModel> Class_CreateErrors() => ResultClass<FakeModel>.From(_errors);
 
     [Benchmark]
-    public ResultRecordClass<FakeModel> RecordClass_CreateErrors() => new(_errors);
+    public ResultRecordClass<FakeModel> RecordClass_CreateErrors() => ResultRecordClass<FakeModel>.From(_errors);
 
     [Benchmark(Baseline = true)]
     public ResultUnion<FakeModel> Union_CreateErrors() => ResultUnion<FakeModel>.From(_errors);
 
     [Benchmark]
-    public ResultUnionNonBoxing<FakeModel> UnionNonBoxing_CreateErrors() => ResultUnionNonBoxing<FakeModel>.From(_errors);
+    public ResultUnionCustom<FakeModel> UnionCustom_CreateErrors() => ResultUnionCustom<FakeModel>.From(_errors);
 }

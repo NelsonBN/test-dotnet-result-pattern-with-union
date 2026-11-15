@@ -39,5 +39,5 @@ public class CreatingErrorsFromImmutableArrayVoidResultBenchmarks
     public ResultUnion Union_CreateErrors() => _errors;
 
     [Benchmark]
-    public ResultUnionNonBoxing UnionNonBoxing_CreateErrors() => _errors;
+    public ResultUnionCustom UnionCustom_CreateErrors() => _errors;
 }

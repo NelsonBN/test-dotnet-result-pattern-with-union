@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Linq;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
@@ -10,11 +11,11 @@ namespace ResultWithUnion.Benchmarks.Tests;
 [MemoryDiagnoser]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-public class CreatingErrorsFromArrayValueResultBenchmarks
+public class CreatingErrorsFromImmutableArrayValueResultBenchmarks
 {
     private const int ErrorsCount = 5;
 
-    private Error[] _errors = default!;
+    private ImmutableArray<Error> _errors = default!;
 
     [GlobalSetup]
     public void Setup()
@@ -36,8 +37,8 @@ public class CreatingErrorsFromArrayValueResultBenchmarks
     public ResultRecordClass<FakeModel> RecordClass_CreateErrors() => new(_errors);
 
     [Benchmark(Baseline = true)]
-    public ResultUnion<FakeModel> Union_CreateErrors() => ResultUnion<FakeModel>.From(_errors);
+    public ResultUnion<FakeModel> Union_CreateErrors() => _errors;
 
     [Benchmark]
-    public ResultUnionNonBoxing<FakeModel> UnionNonBoxing_CreateErrors() => ResultUnionNonBoxing<FakeModel>.From(_errors);
+    public ResultUnionCustom<FakeModel> UnionCustom_CreateErrors() => _errors;
 }

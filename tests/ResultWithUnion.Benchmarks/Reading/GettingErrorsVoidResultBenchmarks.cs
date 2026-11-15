@@ -19,7 +19,7 @@ public class GettingErrorsVoidResultBenchmarks
     private ResultClass _class = null!;
     private ResultRecordClass _recordClass = null!;
     private ResultUnion _union;
-    private ResultUnionNonBoxing _unionNonBoxing;
+    private ResultUnionCustom _unionCustom;
 
     [Params(1, 5)]
     public int ErrorsCount { get; set; }
@@ -29,13 +29,13 @@ public class GettingErrorsVoidResultBenchmarks
     {
         Error[] errors = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new Error($"fake{index}"))];
 
-        _recordStruct = ErrorsCount == 1 ? ResultRecordStruct.From(errors[0]) : new(errors);
-        _struct = ErrorsCount == 1 ? ResultStruct.From(errors[0]) : new(errors);
-        _readonlyStruct = ErrorsCount == 1 ? ResultReadonlyStruct.From(errors[0]) : new(errors);
-        _class = ErrorsCount == 1 ? ResultClass.From(errors[0]) : new(errors);
-        _recordClass = ErrorsCount == 1 ? ResultRecordClass.From(errors[0]) : new(errors);
+        _recordStruct = ErrorsCount == 1 ? ResultRecordStruct.From(errors[0]) : ResultRecordStruct.From(errors);
+        _struct = ErrorsCount == 1 ? ResultStruct.From(errors[0]) : ResultStruct.From(errors);
+        _readonlyStruct = ErrorsCount == 1 ? ResultReadonlyStruct.From(errors[0]) : ResultReadonlyStruct.From(errors);
+        _class = ErrorsCount == 1 ? ResultClass.From(errors[0]) : ResultClass.From(errors);
+        _recordClass = ErrorsCount == 1 ? ResultRecordClass.From(errors[0]) : ResultRecordClass.From(errors);
         _union = ResultUnion.From(errors);
-        _unionNonBoxing = ResultUnionNonBoxing.From(errors);
+        _unionCustom = ResultUnionCustom.From(errors);
     }
 
     [Benchmark]
@@ -57,5 +57,5 @@ public class GettingErrorsVoidResultBenchmarks
     public ImmutableArray<Error> Union_Errors() => _union.Errors;
 
     [Benchmark]
-    public ImmutableArray<Error> UnionNonBoxing_Errors() => _unionNonBoxing.Errors;
+    public ImmutableArray<Error> UnionCustom_Errors() => _unionCustom.Errors;
 }

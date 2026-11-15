@@ -34,5 +34,5 @@ public class CreatingValueResultBenchmarks
     public ResultUnion<FakeModel> Union_CreateSuccess() => _model;
 
     [Benchmark]
-    public ResultUnionNonBoxing<FakeModel> UnionNonBoxing_CreateSuccess() => _model;
+    public ResultUnionCustom<FakeModel> UnionCustom_CreateSuccess() => _model;
 }

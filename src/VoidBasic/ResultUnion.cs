@@ -14,6 +14,8 @@ public union ResultUnion(ImmutableArray<Error>)
         null => throw new InvalidOperationException("Errors can be retrieved only when the result is an error"),
     };
 
+    public static ResultUnion From(Error error) => new(ImmutableArray.Create(error));
+
     public static ResultUnion From(Error[] errors) => new(ImmutableArray.Create(errors.AsSpan()));
 
     public static ResultUnion From(List<Error> errors) => new(ImmutableArray.Create(CollectionsMarshal.AsSpan(errors)));

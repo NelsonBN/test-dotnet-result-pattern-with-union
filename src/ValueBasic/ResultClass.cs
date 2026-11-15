@@ -34,23 +34,11 @@ public sealed class ResultClass<TValue>
 
     public static ResultClass<TValue> From(Error error) => new(ImmutableArray.Create(error));
 
-    public ResultClass(Error[] errors)
-        : this(ImmutableArray.Create(errors.AsSpan()))
-    {
-    }
+    public static ResultClass<TValue> From(Error[] errors) => new(ImmutableArray.Create(errors.AsSpan()));
 
-    public ResultClass(List<Error> errors)
-        : this(ImmutableArray.Create(CollectionsMarshal.AsSpan(errors)))
-    {
-    }
+    public static ResultClass<TValue> From(List<Error> errors) => new(ImmutableArray.Create(CollectionsMarshal.AsSpan(errors)));
 
-    public ResultClass(IEnumerable<Error> errors)
-        : this(ErrorCollection.Create(errors))
-    {
-    }
+    public static ResultClass<TValue> From(IEnumerable<Error> errors) => new(ErrorCollection.Create(errors));
 
-    public ResultClass(params ReadOnlySpan<Error> errors)
-        : this(ImmutableArray.Create(errors))
-    {
-    }
+    public static ResultClass<TValue> From(params ReadOnlySpan<Error> errors) => new(ImmutableArray.Create(errors));
 }

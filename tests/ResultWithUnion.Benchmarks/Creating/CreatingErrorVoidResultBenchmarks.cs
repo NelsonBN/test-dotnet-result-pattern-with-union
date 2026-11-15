@@ -34,5 +34,5 @@ public class CreatingErrorVoidResultBenchmarks
     public ResultUnion Union_CreateError() => ResultUnion.From(_error);
 
     [Benchmark]
-    public ResultUnionNonBoxing UnionNonBoxing_CreateError() => ResultUnionNonBoxing.From(_error);
+    public ResultUnionCustom UnionCustom_CreateError() => ResultUnionCustom.From(_error);
 }

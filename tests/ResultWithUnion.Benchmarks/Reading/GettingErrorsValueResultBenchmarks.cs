@@ -20,7 +20,7 @@ public class GettingErrorsValueResultBenchmarks
     private ResultClass<FakeModel> _class = null!;
     private ResultRecordClass<FakeModel> _recordClass = null!;
     private ResultUnion<FakeModel> _union;
-    private ResultUnionNonBoxing<FakeModel> _unionNonBoxing;
+    private ResultUnionCustom<FakeModel> _unionCustom;
 
     [Params(1, 5)]
     public int ErrorsCount { get; set; }
@@ -30,13 +30,13 @@ public class GettingErrorsValueResultBenchmarks
     {
         Error[] errors = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new Error($"fake{index}"))];
 
-        _recordStruct = ErrorsCount == 1 ? ResultRecordStruct<FakeModel>.From(errors[0]) : new(errors);
-        _struct = ErrorsCount == 1 ? ResultStruct<FakeModel>.From(errors[0]) : new(errors);
-        _readonlyStruct = ErrorsCount == 1 ? ResultReadonlyStruct<FakeModel>.From(errors[0]) : new(errors);
-        _class = ErrorsCount == 1 ? ResultClass<FakeModel>.From(errors[0]) : new(errors);
-        _recordClass = ErrorsCount == 1 ? ResultRecordClass<FakeModel>.From(errors[0]) : new(errors);
+        _recordStruct = ErrorsCount == 1 ? ResultRecordStruct<FakeModel>.From(errors[0]) : ResultRecordStruct<FakeModel>.From(errors);
+        _struct = ErrorsCount == 1 ? ResultStruct<FakeModel>.From(errors[0]) : ResultStruct<FakeModel>.From(errors);
+        _readonlyStruct = ErrorsCount == 1 ? ResultReadonlyStruct<FakeModel>.From(errors[0]) : ResultReadonlyStruct<FakeModel>.From(errors);
+        _class = ErrorsCount == 1 ? ResultClass<FakeModel>.From(errors[0]) : ResultClass<FakeModel>.From(errors);
+        _recordClass = ErrorsCount == 1 ? ResultRecordClass<FakeModel>.From(errors[0]) : ResultRecordClass<FakeModel>.From(errors);
         _union = ResultUnion<FakeModel>.From(errors);
-        _unionNonBoxing = ResultUnionNonBoxing<FakeModel>.From(errors);
+        _unionCustom = ResultUnionCustom<FakeModel>.From(errors);
     }
 
     [Benchmark]
@@ -58,5 +58,5 @@ public class GettingErrorsValueResultBenchmarks
     public ImmutableArray<Error> Union_Errors() => _union.Errors;
 
     [Benchmark]
-    public ImmutableArray<Error> UnionNonBoxing_Errors() => _unionNonBoxing.Errors;
+    public ImmutableArray<Error> UnionCustom_Errors() => _unionCustom.Errors;
 }

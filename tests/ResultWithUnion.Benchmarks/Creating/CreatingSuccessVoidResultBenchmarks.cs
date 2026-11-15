@@ -28,5 +28,5 @@ public class CreatingSuccessVoidResultBenchmarks
     public ResultUnion Union_CreateSuccess() => new();
 
     [Benchmark]
-    public ResultUnionNonBoxing UnionNonBoxing_CreateSuccess() => new();
+    public ResultUnionCustom UnionCustom_CreateSuccess() => new();
 }
