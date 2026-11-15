@@ -17,6 +17,9 @@ Each variant exists as a value result (`src/ValueBasic/`, `Result<Variant><TValu
 | struct, readonly struct, record struct | `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct` |
 | sealed class, sealed record class | `ResultClass`, `ResultRecordClass` |
 | C# 15 union | `union ResultUnion<T>(T, Error, ImmutableArray<Error>)` / `union ResultUnion(Error, ImmutableArray<Error>)` |
+| C# 15 union, non-boxing | hand-written `[Union]` readonly struct `ResultUnionNonBoxing<T>` / `ResultUnionNonBoxing` with real fields, `HasValue` and `TryGetValue` (benchmarked as `UnionNonBoxing_*`) |
+
+The declared `union` boxes its struct cases (`Error`, `ImmutableArray<Error>`) into one `object?` field: with 5 errors it allocates 88 B versus 64 B for the structs (24 B box), and a single `Error` is rebuilt into an array on every `Errors` read. The non-boxing variant exists to measure how much of that gap the boxing explains.
 
 Failed results accept a single `Error` or a collection of errors: `Error[]`, `List<Error>`, `ImmutableArray<Error>`, `ReadOnlySpan<Error>` and any `IEnumerable<Error>` (sets, queues, lazy sequences; dictionaries are not supported). The errors are copied once into an immutable array. The union uses `From(...)` helpers for the same collections.
 

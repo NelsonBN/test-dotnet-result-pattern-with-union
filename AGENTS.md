@@ -23,7 +23,7 @@ An experiment, not a library: compares the **Result pattern** built the classic 
 
 Each variant exists as a value result `Result<Variant><TValue>` in `src/ValueBasic/` and a void result `Result<Variant>` in `src/VoidBasic/`: one type per file, file-scoped namespace `ResultWithUnion.ValueBasic` / `ResultWithUnion.VoidBasic`.
 
-Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultClass` (sealed), `ResultRecordClass` (sealed), and `ResultUnion` (`union ResultUnion<T>(T, Error, ImmutableArray<Error>)` / `union ResultUnion(Error, ImmutableArray<Error>)`).
+Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultClass` (sealed), `ResultRecordClass` (sealed), and `ResultUnion` (`union ResultUnion<T>(T, Error, ImmutableArray<Error>)` / `union ResultUnion(Error, ImmutableArray<Error>)`). A second union, `ResultUnionNonBoxing` (hand-written `[Union]` readonly struct with `HasValue`/`TryGetValue`, benchmarked as `UnionNonBoxing_*`), measures the cost of boxing; `Union_*` stays the only baseline.
 
 - Out of scope, do not add: closed hierarchies, tuples, exceptions.
 - All variants share `src/Common/Error.cs`.
@@ -34,6 +34,7 @@ Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultC
 
 ### Intentional deviations (the only allowed ones)
 
+- **`ResultUnionNonBoxing`**: hand-written union with fields and a tag; same case types, `GetValue()` and `From(...)` as `ResultUnion`, but nothing is boxed and a single `Error` is stored once as a one-element array.
 - **Union**: exposes `GetValue()` instead of `Value`; created via implicit conversions and `From(...)` instead of constructors; boxes its struct cases (`Error`, `ImmutableArray<Error>`), so a single `Error` is rebuilt into a one-element array on every `Errors` access. In the void union, success is `default`, so `default(ResultUnion).IsSuccess` is `true` (the void structs' `default` is a failure).
 - **`readonly struct`**: `IsSuccess` is a `readonly` field (no private setter allowed).
 - **Record struct / record class**: compiler-generated equality, `ToString` and deconstruction are the variation under test.
