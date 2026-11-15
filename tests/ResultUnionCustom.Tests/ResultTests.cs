@@ -623,4 +623,34 @@ public sealed class ResultTests
         // Assert
         value.Should().BeOfType<ImmutableArray<Error>>().Which.Should().Equal(_first);
     }
+
+    [Fact]
+    public void Given_DefaultErrorsArray_When_Constructed_Then_ResultIsAFailureWithAValue()
+    {
+        // Arrange
+        ImmutableArray<Error> errors = default;
+        var result = new Result<string>(errors);
+
+        // Act
+        var hasValue = result.HasValue;
+
+        // Assert
+        hasValue.Should().BeTrue();
+        result.IsSuccess.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Given_DefaultErrorsArray_When_TryGetValueErrors_Then_ReturnsTrueWithEmptyErrors()
+    {
+        // Arrange
+        ImmutableArray<Error> defaultErrors = default;
+        var result = new Result<string>(defaultErrors);
+
+        // Act
+        var found = result.TryGetValue(out ImmutableArray<Error> errors);
+
+        // Assert
+        found.Should().BeTrue();
+        errors.Should().BeEmpty();
+    }
 }

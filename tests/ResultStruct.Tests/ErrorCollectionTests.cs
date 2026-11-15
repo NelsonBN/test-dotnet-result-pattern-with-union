@@ -1,3 +1,6 @@
+using System.Collections.Immutable;
+using System.Runtime.InteropServices;
+
 namespace ResultStruct.Tests;
 
 // ErrorCollection is internal: it is exercised through the public Result.From(IEnumerable<Error>).
@@ -77,5 +80,19 @@ public sealed class ErrorCollectionTests
 
         // Assert
         result.Errors.Should().Equal(_first, _second);
+    }
+
+    [Fact]
+    public void Given_EmptyCountedSequence_When_Created_Then_ErrorsAreTheSharedEmptyArray()
+    {
+        // Arrange
+        IEnumerable<Error> errors = new Queue<Error>();
+
+        // Act
+        var result = Result.From(errors);
+
+        // Assert
+        ImmutableCollectionsMarshal.AsArray(result.Errors)
+            .Should().BeSameAs(ImmutableCollectionsMarshal.AsArray(ImmutableArray<Error>.Empty));
     }
 }

@@ -25,10 +25,10 @@ Requirements, all verified with Stryker 5.1.0:
 ```bash
 ./mutation-tests.sh                       # Linux, macOS
 mutation-tests.bat                        # Windows
-./mutation-tests.sh --project MyProject.csproj --since:main     # extra arguments go to Stryker
+./mutation-tests.sh -o --project MyProject.csproj --since:main     # -o opens the HTML report; other arguments go to Stryker
 ```
 
-The scripts do what a developer would do by hand: `dotnet tool restore`, `dotnet restore`, `dotnet build --no-restore`, then `dotnet stryker --config-file stryker-config.json --open-report` (the report opens in the browser; CI should not use the scripts' `--open-report`, call `dotnet stryker` directly).
+The scripts do what a developer would do by hand: `dotnet tool restore`, `dotnet restore`, `dotnet build --no-restore`, then `dotnet stryker --config-file stryker-config.json` (the HTML report is opened in the browser only when you pass `-o` or `--open`; agents and CI never pass it).
 
 For the agent and the quality gate use the skill script, which mutates only what changed and writes to `artifacts/dotnet-tests/mutation/<project>/`:
 
