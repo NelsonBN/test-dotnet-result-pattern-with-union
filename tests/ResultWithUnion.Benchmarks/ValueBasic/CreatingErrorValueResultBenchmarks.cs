@@ -16,7 +16,7 @@ public class CreatingErrorValueResultBenchmarks
     [GlobalSetup]
     public void Setup() => _error = new("fake");
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ResultRecordStruct<FakeModel> RecordStruct_CreateError() => new(_error);
 
     [Benchmark]
@@ -31,6 +31,6 @@ public class CreatingErrorValueResultBenchmarks
     [Benchmark]
     public ResultRecordClass<FakeModel> RecordClass_CreateError() => new(_error);
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ResultUnion<FakeModel> Union_CreateError() => _error;
 }

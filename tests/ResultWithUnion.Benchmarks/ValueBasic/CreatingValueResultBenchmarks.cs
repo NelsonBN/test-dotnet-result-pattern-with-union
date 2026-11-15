@@ -15,7 +15,7 @@ public class CreatingValueResultBenchmarks
     [GlobalSetup]
     public void Setup() => _model = new();
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ResultRecordStruct<FakeModel> RecordStruct_CreateSuccess() => new(_model);
 
     [Benchmark]
@@ -30,6 +30,6 @@ public class CreatingValueResultBenchmarks
     [Benchmark]
     public ResultRecordClass<FakeModel> RecordClass_CreateSuccess() => new(_model);
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ResultUnion<FakeModel> Union_CreateSuccess() => _model;
 }

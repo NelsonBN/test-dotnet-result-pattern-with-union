@@ -1,6 +1,5 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
-using ResultWithUnion.Benchmarks.Fakes;
 using ResultWithUnion.VoidBasic;
 
 namespace ResultWithUnion.Benchmarks.Tests;
@@ -10,12 +9,7 @@ namespace ResultWithUnion.Benchmarks.Tests;
 [RankColumn]
 public class CreatingSuccessVoidResultBenchmarks
 {
-    private FakeModel _model = null!;
-
-    [GlobalSetup]
-    public void Setup() => _model = new();
-
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public ResultRecordStruct RecordStruct_CreateSuccess() => new();
 
     [Benchmark]
@@ -30,6 +24,6 @@ public class CreatingSuccessVoidResultBenchmarks
     [Benchmark]
     public ResultRecordClass RecordClass_CreateSuccess() => new();
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public ResultUnion Union_CreateSuccess() => new();
 }

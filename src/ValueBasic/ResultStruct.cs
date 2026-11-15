@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 using ResultWithUnion.Common;
 
 namespace ResultWithUnion.ValueBasic;
@@ -11,10 +13,10 @@ public struct ResultStruct<TValue>
         ? _value!
         : throw new InvalidOperationException("Value can be retrieved only when the result is not an error");
 
-    private readonly Error[]? _errors;
-    public IReadOnlyList<Error> Errors => IsSuccess
+    private readonly ImmutableArray<Error> _errors;
+    public ImmutableArray<Error> Errors => IsSuccess
         ? throw new InvalidOperationException("Errors can be retrieved only when the result is an error")
-        : _errors ?? [];
+        : _errors.IsDefault ? ImmutableArray<Error>.Empty : _errors;
 
     public ResultStruct(TValue value)
     {
@@ -23,10 +25,35 @@ public struct ResultStruct<TValue>
         IsSuccess = true;
     }
 
-    public ResultStruct(Error error)
+    public ResultStruct(ImmutableArray<Error> errors)
     {
         _value = default;
-        _errors = [error];
+        _errors = errors;
         IsSuccess = false;
+    }
+
+    public ResultStruct(Error error)
+        : this(ImmutableArray.Create(error))
+    {
+    }
+
+    public ResultStruct(Error[] errors)
+        : this(ImmutableArray.Create(errors.AsSpan()))
+    {
+    }
+
+    public ResultStruct(List<Error> errors)
+        : this(ImmutableArray.Create(CollectionsMarshal.AsSpan(errors)))
+    {
+    }
+
+    public ResultStruct(IEnumerable<Error> errors)
+        : this(ErrorCollection.Create(errors))
+    {
+    }
+
+    public ResultStruct(params ReadOnlySpan<Error> errors)
+        : this(ImmutableArray.Create(errors))
+    {
     }
 }

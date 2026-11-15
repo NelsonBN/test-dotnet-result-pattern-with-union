@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 using ResultWithUnion.Common;
 
 namespace ResultWithUnion.VoidBasic;
@@ -6,10 +8,10 @@ public sealed record class ResultRecordClass
 {
     public bool IsSuccess { get; private set; }
 
-    private readonly Error[]? _errors;
-    public IReadOnlyList<Error> Errors => IsSuccess
+    private readonly ImmutableArray<Error> _errors;
+    public ImmutableArray<Error> Errors => IsSuccess
         ? throw new InvalidOperationException("Errors can be retrieved only when the result is an error")
-        : _errors ?? [];
+        : _errors.IsDefault ? ImmutableArray<Error>.Empty : _errors;
 
     public ResultRecordClass()
     {
@@ -17,9 +19,34 @@ public sealed record class ResultRecordClass
         IsSuccess = true;
     }
 
-    public ResultRecordClass(Error error)
+    public ResultRecordClass(ImmutableArray<Error> errors)
     {
-        _errors = [error];
+        _errors = errors;
         IsSuccess = false;
+    }
+
+    public ResultRecordClass(Error error)
+        : this(ImmutableArray.Create(error))
+    {
+    }
+
+    public ResultRecordClass(Error[] errors)
+        : this(ImmutableArray.Create(errors.AsSpan()))
+    {
+    }
+
+    public ResultRecordClass(List<Error> errors)
+        : this(ImmutableArray.Create(CollectionsMarshal.AsSpan(errors)))
+    {
+    }
+
+    public ResultRecordClass(IEnumerable<Error> errors)
+        : this(ErrorCollection.Create(errors))
+    {
+    }
+
+    public ResultRecordClass(params ReadOnlySpan<Error> errors)
+        : this(ImmutableArray.Create(errors))
+    {
     }
 }
