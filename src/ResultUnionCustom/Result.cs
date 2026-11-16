@@ -12,6 +12,9 @@ public readonly struct Result<T> : IUnion
     private readonly T? _value;
     private readonly ImmutableArray<Error> _errors;
 
+    // Set by the errors constructor, so it stays a plain store; default(Result<T>) has neither case.
+    private readonly bool _isError;
+
     public Result(T value)
     {
         if(value is null)
@@ -24,15 +27,18 @@ public readonly struct Result<T> : IUnion
     }
 
     public Result(ImmutableArray<Error> errors)
-        => _errors = errors.IsDefault ? ImmutableArray<Error>.Empty : errors;
+    {
+        _errors = errors;
+        _isError = true;
+    }
 
     public readonly bool IsSuccess { get; }
 
     public object? Value => IsSuccess
         ? _value
-        : _errors.IsDefault ? null : _errors;
+        : _isError ? Errors : null;
 
-    public bool HasValue => IsSuccess || !_errors.IsDefault;
+    public bool HasValue => IsSuccess || _isError;
 
     public bool TryGetValue(out T value)
     {
@@ -42,8 +48,8 @@ public readonly struct Result<T> : IUnion
 
     public bool TryGetValue(out ImmutableArray<Error> value)
     {
-        value = _errors;
-        return !IsSuccess && !_errors.IsDefault;
+        value = _isError && _errors.IsDefault ? [] : _errors;
+        return _isError;
     }
 
     public T GetValue() => IsSuccess
@@ -52,7 +58,7 @@ public readonly struct Result<T> : IUnion
 
     public ImmutableArray<Error> Errors => IsSuccess
         ? throw new InvalidOperationException("Errors can be retrieved only when the result is an error")
-        : _errors.IsDefault ? ImmutableArray<Error>.Empty : _errors;
+        : _errors.IsDefault ? [] : _errors;
 
     public static Result<T> From(Error error) => new(ImmutableArray.Create(error));
 
@@ -77,27 +83,32 @@ public readonly struct Result<T> : IUnion
 [Union]
 public readonly struct Result : IUnion
 {
-    // default(ImmutableArray) means "no errors set", so default(Result) is a success.
     private readonly ImmutableArray<Error> _errors;
 
+    // Set by the errors constructor, so default(Result) is a success and the constructor stays a plain store.
+    private bool IsError { get; }
+
     public Result(ImmutableArray<Error> errors)
-        => _errors = errors.IsDefault ? ImmutableArray<Error>.Empty : errors;
+    {
+        _errors = errors;
+        IsError = true;
+    }
 
-    public object? Value => IsSuccess ? null : _errors;
+    public object? Value => IsSuccess ? null : Errors;
 
-    public bool HasValue => !IsSuccess;
+    public bool HasValue => IsError;
 
     public bool TryGetValue(out ImmutableArray<Error> value)
     {
-        value = _errors;
-        return !IsSuccess;
+        value = IsError && _errors.IsDefault ? [] : _errors;
+        return IsError;
     }
 
-    public bool IsSuccess => _errors.IsDefault;
+    public bool IsSuccess => !IsError;
 
     public ImmutableArray<Error> Errors => IsSuccess
         ? throw new InvalidOperationException("Errors can be retrieved only when the result is an error")
-        : _errors;
+        : _errors.IsDefault ? [] : _errors;
 
     public static Result From(Error error) => new(ImmutableArray.Create(error));
 
