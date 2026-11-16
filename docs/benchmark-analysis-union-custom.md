@@ -6,7 +6,12 @@ Question: where is `ResultUnionCustom` (the `UnionCustom_*` baseline, Ratio 1.00
 
 ## Status checklist
 
-Result of change A (PR #3): see [benchmark-analysis-union-custom-after-change-a.md](benchmark-analysis-union-custom-after-change-a.md) (CI run 43782547343, ratios are `UnionCustom / Struct` within the same run).
+Follow-up reports:
+
+- Change A (PR #3): [benchmark-analysis-union-custom-after-change-a.md](benchmark-analysis-union-custom-after-change-a.md) (CI run 43782547343, ratios are `UnionCustom / Struct` within the same run).
+- Change C (PR #2, `ResultUnionCustomExtreme` only): [benchmark-analysis-union-custom-extreme-c.md](benchmark-analysis-union-custom-extreme-c.md) (CI run 43779986524, `UnionCustomExtreme` vs `UnionCustom` within the same run).
+
+Legend: [x] = done or closed with a decision; [ ] = still open.
 
 **Worst cases (section 3)**
 
@@ -21,7 +26,7 @@ Result of change A (PR #3): see [benchmark-analysis-union-custom-after-change-a.
 - [x] 4.1 Constructor `IsDefault` normalization: replaced by a plain store plus an `_isError` flag (value struct stays 24 B, void struct 8 B to 16 B); mechanism confirmed by the results, disassembly not done yet
 - [x] 4.3 Double checks on read: the empty fallback now lives only on the read side (`Errors`, `TryGetValue`, `Value`); below the significance rule, no further action
 - [x] 4.5 Void `IsSuccess`: reviewed, no change needed (now `!_isError`)
-- [ ] 4.2 Null check in `Result<T>(T)`: reviewed, intentionally left (cheap, no measurable impact)
+- [x] 4.2 Null check in `Result<T>(T)`: reviewed, closed as no action (cheap, no measurable impact, keeps documented semantics)
 - [ ] 4.4 `object? Value` boxing risk: not measured, needs the Match/`switch` benchmark (F)
 
 **Improvements (section 5)**
@@ -30,9 +35,9 @@ Result of change A (PR #3): see [benchmark-analysis-union-custom-after-change-a.
 - [x] Comments on `_isError` explaining why it must not be removed
 - [x] `AGENTS.md` deviation updated for the flag
 - [x] Second report with CI before/after numbers
-- [ ] B Lazy / branch-free alternative: not needed, A solved it
-- [ ] C `AggressiveInlining`: not needed unless disassembly shows missing inlining
-- [ ] D Collapse the double checks: below the significance rule, skipped
+- [x] B Lazy / branch-free alternative: closed, superseded by A (A reached the same goal and kept the observable behaviour)
+- [x] C `AggressiveInlining` on constructors, `From(...)` and implicit operators: **applied to `ResultUnionCustomExtreme` only** (baseline `ResultUnionCustom` untouched); CI: 15 of 40 comparisons improved (-1.4 to -7.5 ns), 24 level, 1 probable-noise regression (`CreatingErrorsFromListVoidResult`), allocations identical; deliberately not applied to `ResultUnionCustom`, which stays the baseline
+- [x] D Collapse the double checks: closed, below the significance rule (sub-ns after A), skipped
 - [ ] E `[DisassemblyDiagnoser]` and a `--job medium` run on a dedicated machine: open
 - [ ] F Match/`switch` benchmark for the `Value` boxing risk: open (must be added to every variant)
 - [ ] Commit the pending docs and `AGENTS.md` changes: waiting for approval
@@ -118,16 +123,16 @@ All in `src/ResultUnionCustom/Result.cs`.
    - The other five variants assign the field with no validation (AGENTS.md: "no validation").
    - It adds a branch and a static read of `ImmutableArray<Error>.Empty` on every creation path, and it is the only structural difference between this constructor and the struct constructors.
    - Evidence: the constant 3.4-3.65 ns in 3.1 reappears as the gap in 3.2 and 3.3.
-   - Status: likeliest cause, **not yet proven**. Confirm with `[DisassemblyDiagnoser]` (is the constructor inlined, is the struct copied through the stack, is there a static-init helper call).
-2. **Null check in `Result<T>(T value)`** (`if(value is null) { return; }`): cheap and below the rule, but it is a branch the other variants lack and it changes semantics (a null success is read as failure). It does not show in the success benchmarks (0.04 ns), so no action for performance.
-3. **Double checks on the way out**:
+   - Status: **solved by change A** (plain store plus `_isError` flag; CI shows the gap closed). The mechanism is inferred from timings, not yet from disassembly (E still open).
+2. **Status: closed, no action.** **Null check in `Result<T>(T value)`** (`if(value is null) { return; }`): cheap and below the rule, but it is a branch the other variants lack and it changes semantics (a null success is read as failure). It does not show in the success benchmarks (0.04 ns), so no action for performance.
+3. **Status: closed, below the rule** (after A the empty fallback lives on the read side; sub-ns, see the after-change-A report, section 4). **Double checks on the way out**:
    - `Errors` (value): `IsSuccess` then `_errors.IsDefault`.
    - `TryGetValue(out ImmutableArray<Error>)` (value): `!IsSuccess && !_errors.IsDefault`.
    - After the constructor has normalized, only `default(Result<T>)` can hit the second check. Currently below the rule (0.2 ns), and these read paths are already the fastest in the report.
-4. **`object? Value` (the `[Union]` convention member) boxes both cases** (`T` when it is a value type, and the `ImmutableArray<Error>` on failure).
+4. **Status: open (F).** **`object? Value` (the `[Union]` convention member) boxes both cases** (`T` when it is a value type, and the `ImmutableArray<Error>` on failure).
    - Benchmarks use `HasValue`/`TryGetValue` and `IsSuccess`, so it is not measured today.
    - Any consumer that switches through the `Value` property would silently reintroduce the box the custom union exists to avoid. The planned Match/`switch` scenarios must show which members the compiler picks.
-5. **Void: `IsSuccess => _errors.IsDefault`** is a single field check. It is the strongest read path in the report and needs no change.
+5. **Status: closed, no action.** **Void: `IsSuccess`** was `_errors.IsDefault` and is now `!_isError`: still a single field check, level with the structs.
 
 ## 5. Possible improvements
 
@@ -149,26 +154,26 @@ Local before/after, `--job short --inProcess`, Release, Windows 11, .NET 11, sin
 
 Allocations are unchanged. The implicit-`Error` rows (7.9 and 9.0 ns) did not move in this local short run, which was noise: the CI run shows them level with `Struct` (1.03x value, 0.91x void). The CI numbers in sections 3 and 4 are from before this change.
 
-### Other candidates (not applied)
+### All candidates and their status
 
-| # | Change | Expected effect | Cost / risk |
-|---|---|---|---|
-| A (original idea) | Remove the `IsDefault` normalization from the `ImmutableArray` constructor; keep it only in the getters (`Errors`, `TryGetValue`), exactly like `Struct`. | Removes most of the 3.5 ns; should bring creation level with the structs. | Moves a documented behaviour; AGENTS.md "Intentional deviations" and README must be updated. |
-| B | Keep normalization but make it branch-free or lazy (store as is, normalize in `Errors`). | Same as A without changing observable behaviour of `Errors`. | `TryGetValue` must normalize too. |
-| C | Add `[MethodImpl(MethodImplOptions.AggressiveInlining)]` to the constructors and `From(...)` if disassembly shows they are not inlined. | Removes call overhead on creation paths. | Only if A/B do not already fix it. |
-| D | Collapse the double checks in `Errors` and `TryGetValue(out ImmutableArray)`. | Sub-ns; only worth it if A is done. | Below the significance rule. |
-| E | Add `[DisassemblyDiagnoser]` to one creation class and re-run on a dedicated machine (`--job medium`, no CI noise). | Turns the hypothesis into evidence; confirms the 25x is not a measurement artefact. | None. |
-| F | Add the planned Match/`switch` benchmark for `UnionCustom`. | Verifies whether `Value` boxing leaks into consumption. | New benchmark class for every variant (AGENTS.md: change all or none). |
+| # | Change | Expected effect | Cost / risk | Status |
+|---|---|---|---|---|
+| A (original idea) | Remove the `IsDefault` normalization from the `ImmutableArray` constructor; keep it only in the getters (`Errors`, `TryGetValue`), exactly like `Struct`. | Removes most of the 3.5 ns; should bring creation level with the structs. | Moves a documented behaviour; AGENTS.md "Intentional deviations" and README must be updated. | **Done** (as plain store plus `_isError`, see above; `ResultUnionCustom`) |
+| B | Keep normalization but make it branch-free or lazy (store as is, normalize in `Errors`). | Same as A without changing observable behaviour of `Errors`. | `TryGetValue` must normalize too. | **Closed**, superseded by A |
+| C | Add `[MethodImpl(MethodImplOptions.AggressiveInlining)]` to the constructors and `From(...)` if disassembly shows they are not inlined. | Removes call overhead on creation paths. | Only if A/B do not already fix it. | **Done** in `ResultUnionCustomExtreme` only ([report](benchmark-analysis-union-custom-extreme-c.md)) |
+| D | Collapse the double checks in `Errors` and `TryGetValue(out ImmutableArray)`. | Sub-ns; only worth it if A is done. | Below the significance rule. | **Closed**, below the rule |
+| E | Add `[DisassemblyDiagnoser]` to one creation class and re-run on a dedicated machine (`--job medium`, no CI noise). | Turns the hypothesis into evidence; confirms the 25x is not a measurement artefact. | None. | **Open** |
+| F | Add the planned Match/`switch` benchmark for `UnionCustom`. | Verifies whether `Value` boxing leaks into consumption. | New benchmark class for every variant (AGENTS.md: change all or none). | **Open** |
 
 **C applied to `ResultUnionCustomExtreme` only** (`AggressiveInlining` on constructors, `From(...)` and implicit operators; `ResultUnionCustom` untouched as baseline). Local smoke run (Ryzen 5 3600X, Windows 11, `--job short --inProcess`, net11 moniker not recognised, so indicative only): `new(ImmutableArray)` 0.80 ns (value) and about 0 ns (void, work eliminated) vs 2.8 ns baseline; `From(Error)` 5.5 ns vs 9.4 ns (value) and 3.9 ns vs 6.5 ns (void); allocations unchanged (32 B). So the call overhead was a large part of the creation gap. A, B, D, E, F still open.
 
-Suggested order: E first (cheap, decides everything), then A or B, then re-run the creation scenarios and compare against the numbers in this report.
+Remaining order: E first (cheap, confirms the mechanism and the inlining by disassembly), then F, and only then reconsider D. A and C are done, B is closed.
 
 ## 6. Constraints for any follow-up
 
-- Fix with TDD (AGENTS.md): write the failing test that pins the intended `default`/`Empty` behaviour of `UnionCustom` first, then change the constructor.
-- Variants must stay near-identical; this change is a deviation of `ResultUnionCustom` only, so it must be listed (or removed from the list) under "Intentional deviations" in AGENTS.md and README.
-- Build with zero warnings and re-run the affected benchmarks (`CreatingError*`, `CreatingErrorsFromImmutableArray*`, `Implicit*`) before declaring done.
+- [x] Fix with TDD (AGENTS.md): write the failing test that pins the intended `default`/`Empty` behaviour of `UnionCustom` first, then change the constructor.
+- [x] Variants must stay near-identical; this change is a deviation of `ResultUnionCustom` only, so it must be listed (or removed from the list) under "Intentional deviations" in AGENTS.md and README.
+- [x] Build with zero warnings and re-run the affected benchmarks (`CreatingError*`, `CreatingErrorsFromImmutableArray*`, `Implicit*`) before declaring done.
 
 ## 7. Raw numbers
 
