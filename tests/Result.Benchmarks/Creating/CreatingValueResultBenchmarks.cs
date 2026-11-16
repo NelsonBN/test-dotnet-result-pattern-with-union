@@ -34,4 +34,7 @@ public class CreatingValueResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ResultUnionCustom.Result<FakeModel> UnionCustom_CreateSuccess() => _model;
+
+    [Benchmark]
+    public ResultUnionCustomExtreme.Result<FakeModel> UnionCustomExtreme_CreateSuccess() => _model;
 }

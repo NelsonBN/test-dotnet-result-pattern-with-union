@@ -15,6 +15,7 @@ public class CheckingIsSuccessVoidResultBenchmarks
     private ResultRecordClass.Result _recordClass = null!;
     private ResultUnion.Result _union;
     private ResultUnionCustom.Result _unionCustom;
+    private ResultUnionCustomExtreme.Result _unionCustomExtreme;
 
     [Params(true, false)]
     public bool Success { get; set; }
@@ -29,6 +30,7 @@ public class CheckingIsSuccessVoidResultBenchmarks
         ResultRecordClass.Error errorRecordClass = new("fake");
         ResultUnion.Error errorUnion = new("fake");
         ResultUnionCustom.Error errorUnionCustom = new("fake");
+        ResultUnionCustomExtreme.Error errorUnionCustomExtreme = new("fake");
 
         _recordStruct = Success ? new() : ResultRecordStruct.Result.From(errorRecordStruct);
         _struct = Success ? new() : ResultStruct.Result.From(errorStruct);
@@ -37,6 +39,7 @@ public class CheckingIsSuccessVoidResultBenchmarks
         _recordClass = Success ? new() : ResultRecordClass.Result.From(errorRecordClass);
         _union = Success ? new ResultUnion.Result() : ResultUnion.Result.From(errorUnion);
         _unionCustom = Success ? new ResultUnionCustom.Result() : ResultUnionCustom.Result.From(errorUnionCustom);
+        _unionCustomExtreme = Success ? new ResultUnionCustomExtreme.Result() : ResultUnionCustomExtreme.Result.From(errorUnionCustomExtreme);
     }
 
     [Benchmark]
@@ -109,6 +112,17 @@ public class CheckingIsSuccessVoidResultBenchmarks
     public bool UnionCustom_IsSuccess()
     {
         if(_unionCustom.IsSuccess)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    [Benchmark]
+    public bool UnionCustomExtreme_IsSuccess()
+    {
+        if(_unionCustomExtreme.IsSuccess)
         {
             return true;
         }

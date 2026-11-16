@@ -16,6 +16,7 @@ public class CheckingHasValueValueResultBenchmarks
     private ResultRecordClass.Result<FakeModel> _recordClass = null!;
     private ResultUnion.Result<FakeModel> _union;
     private ResultUnionCustom.Result<FakeModel> _unionCustom;
+    private ResultUnionCustomExtreme.Result<FakeModel> _unionCustomExtreme;
 
     [Params(true, false)]
     public bool Success { get; set; }
@@ -31,6 +32,7 @@ public class CheckingHasValueValueResultBenchmarks
         ResultRecordClass.Error errorRecordClass = new("fake");
         ResultUnion.Error errorUnion = new("fake");
         ResultUnionCustom.Error errorUnionCustom = new("fake");
+        ResultUnionCustomExtreme.Error errorUnionCustomExtreme = new("fake");
 
         _recordStruct = Success ? new(model) : ResultRecordStruct.Result<FakeModel>.From(errorRecordStruct);
         _struct = Success ? new(model) : ResultStruct.Result<FakeModel>.From(errorStruct);
@@ -39,6 +41,7 @@ public class CheckingHasValueValueResultBenchmarks
         _recordClass = Success ? new(model) : ResultRecordClass.Result<FakeModel>.From(errorRecordClass);
         _union = Success ? model : ResultUnion.Result<FakeModel>.From(errorUnion);
         _unionCustom = Success ? model : ResultUnionCustom.Result<FakeModel>.From(errorUnionCustom);
+        _unionCustomExtreme = Success ? model : ResultUnionCustomExtreme.Result<FakeModel>.From(errorUnionCustomExtreme);
     }
 
     [Benchmark]
@@ -111,6 +114,17 @@ public class CheckingHasValueValueResultBenchmarks
     public bool UnionCustom_HasValue()
     {
         if(_unionCustom.HasValue)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    [Benchmark]
+    public bool UnionCustomExtreme_HasValue()
+    {
+        if(_unionCustomExtreme.HasValue)
         {
             return true;
         }

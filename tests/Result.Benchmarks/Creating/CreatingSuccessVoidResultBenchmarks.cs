@@ -28,4 +28,7 @@ public class CreatingSuccessVoidResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ResultUnionCustom.Result UnionCustom_CreateSuccess() => new();
+
+    [Benchmark]
+    public static ResultUnionCustomExtreme.Result UnionCustomExtreme_CreateSuccess() => new();
 }

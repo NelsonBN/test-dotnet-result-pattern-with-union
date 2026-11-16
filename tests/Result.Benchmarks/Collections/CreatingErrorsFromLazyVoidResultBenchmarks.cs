@@ -19,6 +19,7 @@ public class CreatingErrorsFromLazyVoidResultBenchmarks
     private IEnumerable<ResultRecordClass.Error> _errorsRecordClass = default!;
     private IEnumerable<ResultUnion.Error> _errorsUnion = default!;
     private IEnumerable<ResultUnionCustom.Error> _errorsUnionCustom = default!;
+    private IEnumerable<ResultUnionCustomExtreme.Error> _errorsUnionCustomExtreme = default!;
 
     [GlobalSetup]
     public void Setup()
@@ -30,6 +31,7 @@ public class CreatingErrorsFromLazyVoidResultBenchmarks
         _errorsRecordClass = Enumerable.Range(1, ErrorsCount).Select(static index => new ResultRecordClass.Error($"fake{index}")).ToArray().Where(static _ => true);
         _errorsUnion = Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnion.Error($"fake{index}")).ToArray().Where(static _ => true);
         _errorsUnionCustom = Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustom.Error($"fake{index}")).ToArray().Where(static _ => true);
+        _errorsUnionCustomExtreme = Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustomExtreme.Error($"fake{index}")).ToArray().Where(static _ => true);
     }
 
     [Benchmark]
@@ -52,4 +54,7 @@ public class CreatingErrorsFromLazyVoidResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ResultUnionCustom.Result UnionCustom_CreateErrors() => ResultUnionCustom.Result.From(_errorsUnionCustom);
+
+    [Benchmark]
+    public ResultUnionCustomExtreme.Result UnionCustomExtreme_CreateErrors() => ResultUnionCustomExtreme.Result.From(_errorsUnionCustomExtreme);
 }

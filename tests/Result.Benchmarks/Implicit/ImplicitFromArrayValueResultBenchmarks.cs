@@ -19,6 +19,7 @@ public class ImplicitFromArrayValueResultBenchmarks
     private ResultRecordClass.Error[] _errorsRecordClass = default!;
     private ResultUnion.Error[] _errorsUnion = default!;
     private ResultUnionCustom.Error[] _errorsUnionCustom = default!;
+    private ResultUnionCustomExtreme.Error[] _errorsUnionCustomExtreme = default!;
 
     [GlobalSetup]
     public void Setup()
@@ -30,6 +31,7 @@ public class ImplicitFromArrayValueResultBenchmarks
         _errorsRecordClass = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultRecordClass.Error($"fake{index}"))];
         _errorsUnion = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnion.Error($"fake{index}"))];
         _errorsUnionCustom = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustom.Error($"fake{index}"))];
+        _errorsUnionCustomExtreme = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustomExtreme.Error($"fake{index}"))];
     }
 
     [Benchmark]
@@ -52,4 +54,7 @@ public class ImplicitFromArrayValueResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ResultUnionCustom.Result<FakeModel> UnionCustom_CreateErrors() => _errorsUnionCustom;
+
+    [Benchmark]
+    public ResultUnionCustomExtreme.Result<FakeModel> UnionCustomExtreme_CreateErrors() => _errorsUnionCustomExtreme;
 }

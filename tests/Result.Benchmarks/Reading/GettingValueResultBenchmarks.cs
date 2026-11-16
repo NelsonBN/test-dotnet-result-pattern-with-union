@@ -17,6 +17,7 @@ public class GettingValueResultBenchmarks
     private ResultRecordClass.Result<FakeModel> _recordClass = null!;
     private ResultUnion.Result<FakeModel> _union;
     private ResultUnionCustom.Result<FakeModel> _unionCustom;
+    private ResultUnionCustomExtreme.Result<FakeModel> _unionCustomExtreme;
 
     [GlobalSetup]
     public void Setup()
@@ -30,6 +31,7 @@ public class GettingValueResultBenchmarks
         _recordClass = new(model);
         _union = model;
         _unionCustom = model;
+        _unionCustomExtreme = model;
     }
 
     [Benchmark]
@@ -52,4 +54,7 @@ public class GettingValueResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public FakeModel UnionCustom_GetValue() => _unionCustom.GetValue();
+
+    [Benchmark]
+    public FakeModel UnionCustomExtreme_GetValue() => _unionCustomExtreme.GetValue();
 }

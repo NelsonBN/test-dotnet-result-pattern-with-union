@@ -20,6 +20,7 @@ public class CreatingErrorsFromListValueResultBenchmarks
     private List<ResultRecordClass.Error> _errorsRecordClass = default!;
     private List<ResultUnion.Error> _errorsUnion = default!;
     private List<ResultUnionCustom.Error> _errorsUnionCustom = default!;
+    private List<ResultUnionCustomExtreme.Error> _errorsUnionCustomExtreme = default!;
 
     [GlobalSetup]
     public void Setup()
@@ -31,6 +32,7 @@ public class CreatingErrorsFromListValueResultBenchmarks
         _errorsRecordClass = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultRecordClass.Error($"fake{index}"))];
         _errorsUnion = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnion.Error($"fake{index}"))];
         _errorsUnionCustom = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustom.Error($"fake{index}"))];
+        _errorsUnionCustomExtreme = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustomExtreme.Error($"fake{index}"))];
     }
 
     [Benchmark]
@@ -53,4 +55,7 @@ public class CreatingErrorsFromListValueResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ResultUnionCustom.Result<FakeModel> UnionCustom_CreateErrors() => ResultUnionCustom.Result<FakeModel>.From(_errorsUnionCustom);
+
+    [Benchmark]
+    public ResultUnionCustomExtreme.Result<FakeModel> UnionCustomExtreme_CreateErrors() => ResultUnionCustomExtreme.Result<FakeModel>.From(_errorsUnionCustomExtreme);
 }

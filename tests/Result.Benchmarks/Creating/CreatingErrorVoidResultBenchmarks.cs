@@ -15,6 +15,7 @@ public class CreatingErrorVoidResultBenchmarks
     private ResultRecordClass.Error _errorRecordClass;
     private ResultUnion.Error _errorUnion;
     private ResultUnionCustom.Error _errorUnionCustom;
+    private ResultUnionCustomExtreme.Error _errorUnionCustomExtreme;
 
     [GlobalSetup]
     public void Setup()
@@ -26,6 +27,7 @@ public class CreatingErrorVoidResultBenchmarks
         _errorRecordClass = new("fake");
         _errorUnion = new("fake");
         _errorUnionCustom = new("fake");
+        _errorUnionCustomExtreme = new("fake");
     }
 
     [Benchmark]
@@ -48,4 +50,7 @@ public class CreatingErrorVoidResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ResultUnionCustom.Result UnionCustom_CreateError() => ResultUnionCustom.Result.From(_errorUnionCustom);
+
+    [Benchmark]
+    public ResultUnionCustomExtreme.Result UnionCustomExtreme_CreateError() => ResultUnionCustomExtreme.Result.From(_errorUnionCustomExtreme);
 }
