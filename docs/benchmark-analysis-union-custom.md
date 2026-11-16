@@ -96,11 +96,31 @@ All in `src/ResultUnionCustom/Result.cs`.
    - Any consumer that switches through the `Value` property would silently reintroduce the box the custom union exists to avoid. The planned Match/`switch` scenarios must show which members the compiler picks.
 5. **Void: `IsSuccess => _errors.IsDefault`** is a single field check. It is the strongest read path in the report and needs no change.
 
-## 5. Possible improvements (experiments, not applied)
+## 5. Possible improvements
+
+### Change A: applied
+
+The constructors of `Result<T>` and `Result` are now plain stores (`_errors = errors; _isError = true;`). The `IsDefault` fallback moved to the read side (`Errors`, `TryGetValue`, `Value`).
+
+Removing the normalization outright was not possible: the void result defines success as `_errors.IsDefault`, and the value result uses it to tell `default(Result<T>)` (no value) from a failure built with a default array. An `_isError` flag now carries that state, so `default` is still "no value" (value) or a success (void) and every existing test stays green. The value struct stays 24 B (the flag fits in padding); the void struct grows from 8 B to 16 B.
+
+Local before/after, `--job short --inProcess`, Release, Windows 11, .NET 11, single run, so noisy (the `Error` column is large); the pass-through and single-error rows are far outside the noise:
+
+| Scenario | Before | After | Struct (after) |
+|---|---:|---:|---:|
+| `new(ImmutableArray)`, value | 2.84 ns | 0.044 ns | 0.044 ns |
+| `new(ImmutableArray)`, void | 2.58 ns | 0.020 ns | 0.033 ns |
+| `From(Error)`, value | 9.10 ns | 5.26 ns | 5.28 ns |
+| `From(Error)`, void | 6.39 ns | 5.48 ns | 5.21 ns |
+| `Error[]`, value | 20.83 ns | 15.02 ns | 13.87 ns |
+
+Allocations are unchanged. The implicit-`Error` rows (7.9 and 9.0 ns after) did not show the same improvement in this run; with the `From(Error)` rows moving as expected this looks like short-job noise, but it should be re-checked in a longer run (`--job medium`) before drawing conclusions. The CI numbers in sections 3 and 4 are from before this change.
+
+### Other candidates (not applied)
 
 | # | Change | Expected effect | Cost / risk |
 |---|---|---|---|
-| A | Remove the `IsDefault` normalization from the `ImmutableArray` constructor; keep it only in the getters (`Errors`, `TryGetValue`), exactly like `Struct`. | Removes most of the 3.5 ns; should bring creation level with the structs. | Moves a documented behaviour; AGENTS.md "Intentional deviations" and README must be updated. |
+| A (original idea) | Remove the `IsDefault` normalization from the `ImmutableArray` constructor; keep it only in the getters (`Errors`, `TryGetValue`), exactly like `Struct`. | Removes most of the 3.5 ns; should bring creation level with the structs. | Moves a documented behaviour; AGENTS.md "Intentional deviations" and README must be updated. |
 | B | Keep normalization but make it branch-free or lazy (store as is, normalize in `Errors`). | Same as A without changing observable behaviour of `Errors`. | `TryGetValue` must normalize too. |
 | C | Add `[MethodImpl(MethodImplOptions.AggressiveInlining)]` to the constructors and `From(...)` if disassembly shows they are not inlined. | Removes call overhead on creation paths. | Only if A/B do not already fix it. |
 | D | Collapse the double checks in `Errors` and `TryGetValue(out ImmutableArray)`. | Sub-ns; only worth it if A is done. | Below the significance rule. |

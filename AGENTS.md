@@ -36,7 +36,7 @@ Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultC
 
 ### Intentional deviations (the only allowed ones)
 
-- **`ResultUnionCustom`**: hand-written union with fields; same case types, `GetValue()` and `From(...)` as the `ResultUnion` project, but nothing is boxed.
+- **`ResultUnionCustom`**: hand-written union with fields; same case types, `GetValue()` and `From(...)` as the `ResultUnion` project, but nothing is boxed. Its `ImmutableArray<Error>` constructor is a plain store plus an `_isError` flag (so `default` stays "no value" for value results and a success for void results); a default array is turned into an empty one only when read.
 - **`ResultUnion`**: has no `HasValue`/`TryGetValue`. A declared union lowers patterns (`is T`, `is null`) onto those members when present, so declaring them makes `IsSuccess`/`GetValue()` recurse infinitely (stack overflow); use `is T value` / `is ImmutableArray<Error> errors` instead (the benchmarks do). On default, `ResultUnionCustom.Result<T>` reports no value (`HasValue` false, both `TryGetValue` false), whereas the struct value results treat default as a failure with empty errors (their `HasValue` is therefore always `true`, since they always hold one of the two cases).
 - **Union**: exposes `GetValue()` instead of `Value`; created via implicit conversions and `From(...)` instead of constructors; boxes its `ImmutableArray<Error>` case (a 24 B box on every error creation). In the void union, success is `default`, so `default(ResultUnion.Result).IsSuccess` is `true` (the void structs' `default` is a failure).
 - **`readonly struct`**: `IsSuccess` is a `readonly` field (no private setter allowed).
