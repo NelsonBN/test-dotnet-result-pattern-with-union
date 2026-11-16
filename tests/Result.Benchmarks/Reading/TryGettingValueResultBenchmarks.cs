@@ -17,6 +17,7 @@ public class TryGettingValueResultBenchmarks
     private ResultRecordClass.Result<FakeModel> _recordClass = null!;
     private ResultUnion.Result<FakeModel> _union;
     private ResultUnionCustom.Result<FakeModel> _unionCustom;
+    private ResultUnionCustomExtreme.Result<FakeModel> _unionCustomExtreme;
 
     [GlobalSetup]
     public void Setup()
@@ -30,6 +31,7 @@ public class TryGettingValueResultBenchmarks
         _recordClass = new(model);
         _union = model;
         _unionCustom = model;
+        _unionCustomExtreme = model;
     }
 
     [Benchmark]
@@ -73,4 +75,8 @@ public class TryGettingValueResultBenchmarks
     {
         return _unionCustom.TryGetValue(out FakeModel value) ? value : default!;
     }
+
+    [Benchmark]
+    public FakeModel UnionCustomExtreme_TryGetValue()
+        => _unionCustomExtreme.TryGetValue(out FakeModel value) ? value : default!;
 }

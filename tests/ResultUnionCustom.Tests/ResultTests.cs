@@ -653,4 +653,50 @@ public sealed class ResultTests
         found.Should().BeTrue();
         errors.Should().BeEmpty();
     }
+
+    [Fact]
+    public void Given_DefaultErrorsArray_When_VoidConstructed_Then_HasValueAndTryGetValueReportTheFailure()
+    {
+        // Arrange
+        ImmutableArray<Error> defaultErrors = default;
+        var result = new Result(defaultErrors);
+
+        // Act
+        var hasValue = result.HasValue;
+        var found = result.TryGetValue(out var errors);
+
+        // Assert
+        hasValue.Should().BeTrue();
+        found.Should().BeTrue();
+        errors.IsDefault.Should().BeFalse();
+        errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Given_DefaultErrorsArray_When_ValueRead_Then_ReturnsEmptyErrors()
+    {
+        // Arrange
+        ImmutableArray<Error> defaultErrors = default;
+        var result = new Result<string>(defaultErrors);
+
+        // Act
+        var value = result.Value;
+
+        // Assert
+        value.Should().BeOfType<ImmutableArray<Error>>().Which.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Given_DefaultErrorsArray_When_VoidValueRead_Then_ReturnsEmptyErrors()
+    {
+        // Arrange
+        ImmutableArray<Error> defaultErrors = default;
+        var result = new Result(defaultErrors);
+
+        // Act
+        var value = result.Value;
+
+        // Assert
+        value.Should().BeOfType<ImmutableArray<Error>>().Which.Should().BeEmpty();
+    }
 }

@@ -18,6 +18,7 @@ Each variant is its own project `src/Result<Variant>/` (namespace `Result<Varian
 | sealed class, sealed record class | `ResultClass`, `ResultRecordClass` |
 | C# 15 union | `union Result<T>(T, ImmutableArray<Error>)` / `union Result(ImmutableArray<Error>)` |
 | C# 15 union, non-boxing | hand-written `[Union]` readonly struct `Result<T>` / `Result` in `ResultUnionCustom` with real fields, `HasValue` and `TryGetValue` (benchmarked as `UnionCustom_*`) |
+| C# 15 union, non-boxing, extreme | copy of `ResultUnionCustom` in `ResultUnionCustomExtreme`, the playground for aggressive performance experiments (benchmarked as `UnionCustomExtreme_*`, not a baseline) |
 
 The declared `union` boxes its `ImmutableArray<Error>` case into one `object?` field: with 5 errors it allocates 88 B versus 64 B for the structs (24 B box). A single `Error` is created with `From(error)`. The non-boxing variant exists to measure how much of that gap the boxing explains.
 

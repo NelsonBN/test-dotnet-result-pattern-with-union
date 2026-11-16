@@ -16,6 +16,7 @@ public class ImplicitFromErrorValueResultBenchmarks
     private ResultRecordClass.Error _errorRecordClass;
     private ResultUnion.Error _errorUnion;
     private ResultUnionCustom.Error _errorUnionCustom;
+    private ResultUnionCustomExtreme.Error _errorUnionCustomExtreme;
 
     [GlobalSetup]
     public void Setup()
@@ -27,6 +28,7 @@ public class ImplicitFromErrorValueResultBenchmarks
         _errorRecordClass = new("fake1");
         _errorUnion = new("fake1");
         _errorUnionCustom = new("fake1");
+        _errorUnionCustomExtreme = new("fake1");
     }
 
     [Benchmark]
@@ -49,4 +51,7 @@ public class ImplicitFromErrorValueResultBenchmarks
 
     [Benchmark(Baseline = true)]
     public ResultUnionCustom.Result<FakeModel> UnionCustom_CreateErrors() => _errorUnionCustom;
+
+    [Benchmark]
+    public ResultUnionCustomExtreme.Result<FakeModel> UnionCustomExtreme_CreateErrors() => _errorUnionCustomExtreme;
 }

@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\ResultRecordStruct\ResultRecordStruct.csproj" />
     <ProjectReference Include="..\..\src\ResultUnion\ResultUnion.csproj" />
     <ProjectReference Include="..\..\src\ResultUnionCustom\ResultUnionCustom.csproj" />
+    <ProjectReference Include="..\..\src\ResultUnionCustomExtreme\ResultUnionCustomExtreme.csproj" />
   </ItemGroup>
 
 </Project>

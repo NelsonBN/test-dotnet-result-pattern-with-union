@@ -19,6 +19,7 @@ public class ImplicitFromSpanVoidResultBenchmarks
     private ResultRecordClass.Error[] _errorsRecordClass = default!;
     private ResultUnion.Error[] _errorsUnion = default!;
     private ResultUnionCustom.Error[] _errorsUnionCustom = default!;
+    private ResultUnionCustomExtreme.Error[] _errorsUnionCustomExtreme = default!;
 
     [GlobalSetup]
     public void Setup()
@@ -30,6 +31,7 @@ public class ImplicitFromSpanVoidResultBenchmarks
         _errorsRecordClass = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultRecordClass.Error($"fake{index}"))];
         _errorsUnion = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnion.Error($"fake{index}"))];
         _errorsUnionCustom = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustom.Error($"fake{index}"))];
+        _errorsUnionCustomExtreme = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustomExtreme.Error($"fake{index}"))];
     }
 
     [Benchmark]
@@ -78,6 +80,13 @@ public class ImplicitFromSpanVoidResultBenchmarks
     public ResultUnionCustom.Result UnionCustom_CreateErrors()
     {
         ReadOnlySpan<ResultUnionCustom.Error> errors = _errorsUnionCustom;
+        return errors;
+    }
+
+    [Benchmark]
+    public ResultUnionCustomExtreme.Result UnionCustomExtreme_CreateErrors()
+    {
+        ReadOnlySpan<ResultUnionCustomExtreme.Error> errors = _errorsUnionCustomExtreme;
         return errors;
     }
 }

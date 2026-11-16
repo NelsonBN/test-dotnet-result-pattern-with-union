@@ -7,7 +7,7 @@ Guidance for AI coding assistants working in this repository.
 An experiment, not a library: compares the **Result pattern** built the classic way (class, record class, struct, readonly struct, record struct) against one built on the **C# 15 / .NET 11 `union`**, measured with BenchmarkDotNet for speed and allocations. Question: *does a `union` make a better Result type in performance, allocations and ergonomics?*
 
 - .NET 11 SDK (pinned in `global.json`), C# 15 (default for `net11`; do **not** set `LangVersion`, do **not** add older targets or `RuntimeMoniker` jobs).
-- `src/` holds one project per variant (`ResultClass/`, `ResultRecordClass/`, `ResultStruct/`, `ResultReadonlyStruct/`, `ResultRecordStruct/`, `ResultUnion/`, `ResultUnionCustom/`); `tests/Result.Benchmarks/` is the single benchmark project and references all of them; `tests/<Variant>.Tests/` is one unit-test project per variant with the same three test files (`ResultTests.cs`, `ErrorTests.cs`, `ErrorCollectionTests.cs`), kept as similar as the API allows. There is no shared project.
+- `src/` holds one project per variant (`ResultClass/`, `ResultRecordClass/`, `ResultStruct/`, `ResultReadonlyStruct/`, `ResultRecordStruct/`, `ResultUnion/`, `ResultUnionCustom/`, `ResultUnionCustomExtreme/`); `tests/Result.Benchmarks/` is the single benchmark project and references all of them; `tests/<Variant>.Tests/` is one unit-test project per variant with the same three test files (`ResultTests.cs`, `ErrorTests.cs`, `ErrorCollectionTests.cs`), kept as similar as the API allows. There is no shared project.
 
 > ## HARD RULE: variants differ only in the representation under test
 >
@@ -24,7 +24,7 @@ An experiment, not a library: compares the **Result pattern** built the classic 
 
 Each variant is a project `src/Result<Variant>/Result<Variant>.csproj` with file-scoped namespace `Result<Variant>` and the **same type names in every project**, both in one file in the project root, `Result.cs` (`Result<TValue>` for value, `Result` for void), plus the project's own `Error.cs` and `ErrorCollection.cs`. Benchmarks refer to them by namespace (`ResultStruct.Result<FakeModel>`, `ResultStruct.Error`).
 
-Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultClass` (sealed), `ResultRecordClass` (sealed), and `ResultUnion` (`union Result<T>(T, ImmutableArray<Error>)` / `union Result(ImmutableArray<Error>)`). A second union, `ResultUnionCustom` (hand-written `[Union]` readonly struct with `HasValue`/`TryGetValue`, benchmarked as `UnionCustom_*`), measures the cost of boxing and is the only baseline (`UnionCustom_*`).
+Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultClass` (sealed), `ResultRecordClass` (sealed), and `ResultUnion` (`union Result<T>(T, ImmutableArray<Error>)` / `union Result(ImmutableArray<Error>)`). A second union, `ResultUnionCustom` (hand-written `[Union]` readonly struct with `HasValue`/`TryGetValue`, benchmarked as `UnionCustom_*`), measures the cost of boxing and is the only baseline (`UnionCustom_*`). `ResultUnionCustomExtreme` is a copy of it for extreme performance experiments (`UnionCustomExtreme_*`, not a baseline).
 
 - Out of scope, do not add: closed hierarchies, tuples, exceptions.
 - Every test project csproj (`tests/*`) sets `<IsPackable>false</IsPackable>` and `<Nullable>enable</Nullable>`.
@@ -36,7 +36,8 @@ Variants: `ResultStruct`, `ResultReadonlyStruct`, `ResultRecordStruct`, `ResultC
 
 ### Intentional deviations (the only allowed ones)
 
-- **`ResultUnionCustom`**: hand-written union with fields; same case types, `GetValue()` and `From(...)` as the `ResultUnion` project, but nothing is boxed.
+- **`ResultUnionCustom`**: hand-written union with fields; same case types, `GetValue()` and `From(...)` as the `ResultUnion` project, but nothing is boxed. Its `ImmutableArray<Error>` constructor is a plain store plus an `_isError` flag (so `default` stays "no value" for value results and a success for void results); a default array is turned into an empty one only when read.
+- **`ResultUnionCustomExtreme`**: started as an exact copy of `ResultUnionCustom` (before its change A, so it still normalizes in the constructor) (benchmarked as `UnionCustomExtreme_*`, never the baseline); sandbox for aggressive performance experiments, so it may diverge from `ResultUnionCustom` internals while keeping the same public API. Applied so far: `AggressiveInlining` on constructors, `From(...)` and implicit operators (improvement C of `docs/benchmark-analysis-union-custom.md`).
 - **`ResultUnion`**: has no `HasValue`/`TryGetValue`. A declared union lowers patterns (`is T`, `is null`) onto those members when present, so declaring them makes `IsSuccess`/`GetValue()` recurse infinitely (stack overflow); use `is T value` / `is ImmutableArray<Error> errors` instead (the benchmarks do). On default, `ResultUnionCustom.Result<T>` reports no value (`HasValue` false, both `TryGetValue` false), whereas the struct value results treat default as a failure with empty errors (their `HasValue` is therefore always `true`, since they always hold one of the two cases).
 - **Union**: exposes `GetValue()` instead of `Value`; created via implicit conversions and `From(...)` instead of constructors; boxes its `ImmutableArray<Error>` case (a 24 B box on every error creation). In the void union, success is `default`, so `default(ResultUnion.Result).IsSuccess` is `true` (the void structs' `default` is a failure).
 - **`readonly struct`**: `IsSuccess` is a `readonly` field (no private setter allowed).

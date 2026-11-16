@@ -19,6 +19,7 @@ public class TryGettingErrorsValueResultBenchmarks
     private ResultRecordClass.Result<FakeModel> _recordClass = null!;
     private ResultUnion.Result<FakeModel> _union;
     private ResultUnionCustom.Result<FakeModel> _unionCustom;
+    private ResultUnionCustomExtreme.Result<FakeModel> _unionCustomExtreme;
 
     [Params(1, 5)]
     public int ErrorsCount { get; set; }
@@ -33,6 +34,7 @@ public class TryGettingErrorsValueResultBenchmarks
         ResultRecordClass.Error[] errorsRecordClass = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultRecordClass.Error($"fake{index}"))];
         ResultUnion.Error[] errorsUnion = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnion.Error($"fake{index}"))];
         ResultUnionCustom.Error[] errorsUnionCustom = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustom.Error($"fake{index}"))];
+        ResultUnionCustomExtreme.Error[] errorsUnionCustomExtreme = [.. Enumerable.Range(1, ErrorsCount).Select(static index => new ResultUnionCustomExtreme.Error($"fake{index}"))];
 
         _recordStruct = ErrorsCount == 1 ? ResultRecordStruct.Result<FakeModel>.From(errorsRecordStruct[0]) : ResultRecordStruct.Result<FakeModel>.From(errorsRecordStruct);
         _struct = ErrorsCount == 1 ? ResultStruct.Result<FakeModel>.From(errorsStruct[0]) : ResultStruct.Result<FakeModel>.From(errorsStruct);
@@ -41,6 +43,7 @@ public class TryGettingErrorsValueResultBenchmarks
         _recordClass = ErrorsCount == 1 ? ResultRecordClass.Result<FakeModel>.From(errorsRecordClass[0]) : ResultRecordClass.Result<FakeModel>.From(errorsRecordClass);
         _union = ResultUnion.Result<FakeModel>.From(errorsUnion);
         _unionCustom = ResultUnionCustom.Result<FakeModel>.From(errorsUnionCustom);
+        _unionCustomExtreme = ResultUnionCustomExtreme.Result<FakeModel>.From(errorsUnionCustomExtreme);
     }
 
     [Benchmark]
@@ -84,4 +87,8 @@ public class TryGettingErrorsValueResultBenchmarks
     {
         return _unionCustom.TryGetValue(out ImmutableArray<ResultUnionCustom.Error> errors) ? errors : default;
     }
+
+    [Benchmark]
+    public ImmutableArray<ResultUnionCustomExtreme.Error> UnionCustomExtreme_TryGetErrors()
+        => _unionCustomExtreme.TryGetValue(out ImmutableArray<ResultUnionCustomExtreme.Error> errors) ? errors : default;
 }

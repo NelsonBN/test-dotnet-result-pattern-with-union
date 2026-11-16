@@ -7,6 +7,7 @@
     <Project Path="src/ResultRecordStruct/ResultRecordStruct.csproj" />
     <Project Path="src/ResultUnion/ResultUnion.csproj" />
     <Project Path="src/ResultUnionCustom/ResultUnionCustom.csproj" />
+    <Project Path="src/ResultUnionCustomExtreme/ResultUnionCustomExtreme.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Result.Benchmarks/Result.Benchmarks.csproj" />
@@ -17,5 +18,6 @@
     <Project Path="tests/ResultStruct.Tests/ResultStruct.Tests.csproj" />
     <Project Path="tests/ResultUnion.Tests/ResultUnion.Tests.csproj" />
     <Project Path="tests/ResultUnionCustom.Tests/ResultUnionCustom.Tests.csproj" />
+    <Project Path="tests/ResultUnionCustomExtreme.Tests/ResultUnionCustomExtreme.Tests.csproj" />
   </Folder>
 </Solution>
