@@ -86,25 +86,25 @@ public readonly struct Result : IUnion
     private readonly ImmutableArray<Error> _errors;
 
     // Set by the errors constructor, so default(Result) is a success and the constructor stays a plain store.
-    private bool IsError { get; }
+    private bool _isError { get; }
 
     public Result(ImmutableArray<Error> errors)
     {
         _errors = errors;
-        IsError = true;
+        _isError = true;
     }
 
     public object? Value => IsSuccess ? null : Errors;
 
-    public bool HasValue => IsError;
+    public bool HasValue => _isError;
 
     public bool TryGetValue(out ImmutableArray<Error> value)
     {
-        value = IsError && _errors.IsDefault ? [] : _errors;
-        return IsError;
+        value = _isError && _errors.IsDefault ? [] : _errors;
+        return _isError;
     }
 
-    public bool IsSuccess => !IsError;
+    public bool IsSuccess => !_isError;
 
     public ImmutableArray<Error> Errors => IsSuccess
         ? throw new InvalidOperationException("Errors can be retrieved only when the result is an error")
