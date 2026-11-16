@@ -88,4 +88,4 @@ Some read benchmarks reported about 0 ns for `UnionCustom` in the first report, 
 - One CI run per side on a shared runner. For published numbers re-run on a dedicated machine with `--job medium`, and re-run the unchanged `Struct` rows as the control.
 - The `ImplicitFromError*` rows now agree with the `From(Error)` rows (1.03x and 0.91x); the local short run mentioned earlier in the first report's section 5 was noise.
 - The first report's section 5 text on read paths (and the "fastest in `TryGetValue(out ImmutableArray)`" line in section 3.5) should be corrected to match section 4 here.
-- Still open from the first report: option E (`[DisassemblyDiagnoser]`) to confirm the mechanism, option F (Match/`switch` benchmark for the `object? Value` boxing risk).
+- Option E is done (section 8 of the first report): the Tier1 disassembly confirms the constructor is a plain store. Still open from the first report: option F (Match/`switch` benchmark for the `object? Value` boxing risk).
