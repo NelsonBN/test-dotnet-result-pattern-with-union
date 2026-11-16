@@ -74,14 +74,14 @@ dotnet run -c Release --project tests/Result.Benchmarks -- --filter "*CreatingVa
 
 ## Benchmark Conventions
 
-One class per scenario in `tests/Result.Benchmarks/` grouped in one folder per scenario (`Creating/`, `Collections/`, `Reading/`, `Checking/`), value and void side by side, namespace `Result.Benchmarks.Tests`, fakes in `FakeModel.cs`. `Program.cs` uses `BenchmarkSwitcher`, so select scenarios with `--filter`.
+One class per scenario in `tests/Result.Benchmarks/` grouped in one folder per scenario (`Creating/`, `Collections/`, `Reading/`, `Checking/`, `Switching/`), value and void side by side, namespace `Result.Benchmarks.Tests` (new scenario folders use the folder namespace, e.g. `Result.Benchmarks.Switching`, because the lint hook flags IDE0130 on changed files), fakes in `FakeModel.cs`. `Program.cs` uses `BenchmarkSwitcher`, so select scenarios with `--filter`.
 
 - Classes are named `<Scenario>Benchmarks`, methods `<Variant>_<Action>` (`RecordStruct`, `Struct`, `ReadonlyStruct`, `Class`, `RecordClass`, `Union`).
 - `[MemoryDiagnoser]` is mandatory; also `[RankColumn]` and `[Orderer(SummaryOrderPolicy.FastestToSlowest)]`.
 - Exactly one `[Benchmark(Baseline = true)]` per scenario (per `[BenchmarkCategory]` group), always `UnionCustom_*`.
 - Return the result (or use a `Consumer`/`Blackhole`) to prevent dead-code elimination; build inputs in `[GlobalSetup]`/`[IterationSetup]`.
 - Every class covers all variants; adding a variant means adding its method to every existing class with identical inputs.
-- Scenarios: create success (value/void), create error (value/void), errors from each collection type, implicit conversion from `Error`/`Error[]`/`List<Error>`/`ReadOnlySpan<Error>` (`Implicit/`), `HasValue`/`TryGetValue` (`Checking/`, `Reading/`), `IsSuccess` branching on success and failure, reading `Errors` (1 and 5 errors), reading `Value`. **Planned, not yet written:** factory from error-or-value, `Match` and `switch` consumption.
+- Scenarios: create success (value/void), create error (value/void), errors from each collection type, implicit conversion from `Error`/`Error[]`/`List<Error>`/`ReadOnlySpan<Error>` (`Implicit/`), `HasValue`/`TryGetValue` (`Checking/`, `Reading/`), `IsSuccess` branching on success and failure, reading `Errors` (1 and 5 errors), reading `Value`, `switch` consumption (`Switching/`; the unions use a `switch` expression, the others a `TryGetValue` chain). **Planned, not yet written:** factory from error-or-value, `Match`.
 
 ### Reporting results
 

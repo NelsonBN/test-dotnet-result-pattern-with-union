@@ -39,6 +39,7 @@ Benchmarks live in the single project `tests/Result.Benchmarks/` (it references 
 | non-throwing read with `TryGetValue` (value, errors with 1 and 5; value / void) | `Reading/TryGetting{Value,ErrorsValue,ErrorsVoid}ResultBenchmarks` (the union uses `is` patterns) |
 | `HasValue` on success and failure (value / void; the union uses `is not null`) | `Checking/CheckingHasValue{Value,Void}ResultBenchmarks` |
 | branch on `if(result.IsSuccess)`, read `Errors` (1 or 5 errors) and `Value`/`GetValue()` | `Checking/CheckingIsSuccess...`, `Reading/GettingErrors...` (value and void) and `Reading/GettingValueResultBenchmarks` |
+| consume by case (value / void; the unions use a `switch` expression, the others a `TryGetValue` chain) | `Switching/Switching{Value,Void}ResultBenchmarks` |
 
 Closed hierarchies, tuples and exceptions are out of scope.
 

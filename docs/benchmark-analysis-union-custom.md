@@ -27,7 +27,7 @@ Legend: [x] = done or closed with a decision; [ ] = still open.
 - [x] 4.3 Double checks on read: the empty fallback now lives only on the read side (`Errors`, `TryGetValue`, `Value`); below the significance rule, no further action
 - [x] 4.5 Void `IsSuccess`: reviewed, no change needed (now `!_isError`)
 - [x] 4.2 Null check in `Result<T>(T)`: reviewed, closed as no action (cheap, no measurable impact, keeps documented semantics)
-- [ ] 4.4 `object? Value` boxing risk: not measured, needs the Match/`switch` benchmark (F)
+- [x] 4.4 `object? Value` boxing risk: measured with the `switch` benchmark (F): no allocation on the consumption path (section 9); a `Match` helper is still not benchmarked
 
 **Improvements (section 5)**
 
@@ -39,7 +39,7 @@ Legend: [x] = done or closed with a decision; [ ] = still open.
 - [x] C `AggressiveInlining` on constructors, `From(...)` and implicit operators: **applied to `ResultUnionCustomExtreme` only** (baseline `ResultUnionCustom` untouched); CI: 15 of 40 comparisons improved (-1.4 to -7.5 ns), 24 level, 1 probable-noise regression (`CreatingErrorsFromListVoidResult`), allocations identical; deliberately not applied to `ResultUnionCustom`, which stays the baseline
 - [x] D Collapse the double checks: closed, below the significance rule (sub-ns after A), skipped
 - [x] E Disassembly: done with `DOTNET_JitDisasm` (BDN `--disasm` does not work with `--inProcess` on net11); constructor confirmed a plain store, and `AggressiveInlining` (C) turned out to change nothing at Tier1 (section 8). The `--job medium` run on a dedicated machine is still not done
-- [ ] F Match/`switch` benchmark for the `Value` boxing risk: open (must be added to every variant)
+- [x] F `switch` benchmark for the `Value` boxing risk: done (`Switching/`, every variant, value and void); `Match` is still planned (no variant has it)
 - [ ] Commit the pending docs and `AGENTS.md` changes: waiting for approval
 
 ## 1. Setup and caveats
@@ -163,11 +163,11 @@ Allocations are unchanged. The implicit-`Error` rows (7.9 and 9.0 ns) did not mo
 | C | Add `[MethodImpl(MethodImplOptions.AggressiveInlining)]` to the constructors and `From(...)` if disassembly shows they are not inlined. | Removes call overhead on creation paths. | Only if A/B do not already fix it. | **Done** in `ResultUnionCustomExtreme` only ([report](benchmark-analysis-union-custom-extreme-c.md)) |
 | D | Collapse the double checks in `Errors` and `TryGetValue(out ImmutableArray)`. | Sub-ns; only worth it if A is done. | Below the significance rule. | **Closed**, below the rule |
 | E | Add `[DisassemblyDiagnoser]` to one creation class and re-run on a dedicated machine (`--job medium`, no CI noise). | Turns the hypothesis into evidence; confirms the 25x is not a measurement artefact. | None. | **Done**, see section 8 (done with `DOTNET_JitDisasm`, not `[DisassemblyDiagnoser]`) |
-| F | Add the planned Match/`switch` benchmark for `UnionCustom`. | Verifies whether `Value` boxing leaks into consumption. | New benchmark class for every variant (AGENTS.md: change all or none). | **Open** |
+| F | Add the planned Match/`switch` benchmark for `UnionCustom`. | Verifies whether `Value` boxing leaks into consumption. | New benchmark class for every variant (AGENTS.md: change all or none). | **Done** for `switch`, see section 9; `Match` not written |
 
 **C applied to `ResultUnionCustomExtreme` only** (`AggressiveInlining` on constructors, `From(...)` and implicit operators; `ResultUnionCustom` untouched as baseline). Local smoke run (Ryzen 5 3600X, Windows 11, `--job short --inProcess`, net11 moniker not recognised, so indicative only): `new(ImmutableArray)` 0.80 ns (value) and about 0 ns (void, work eliminated) vs 2.8 ns baseline; `From(Error)` 5.5 ns vs 9.4 ns (value) and 3.9 ns vs 6.5 ns (void); allocations unchanged (32 B). So the call overhead was a large part of the creation gap. A, B, D, E, F still open.
 
-Remaining order: F, and only then reconsider D. A, C and E are done, B is closed.
+Remaining order: a `--job medium` run on a dedicated machine, then reconsider D. A, C, E and F are done, B is closed.
 
 ## 6. Constraints for any follow-up
 
@@ -202,3 +202,23 @@ Consequences:
 - Do not apply C to `ResultUnionCustom` and do not spend more time on inlining attributes: the JIT already does it.
 - The earlier claim that C "removes call overhead" (section 5) is not supported by the disassembly; treat the CI numbers as noise until a `--job medium` run on a dedicated machine says otherwise (still open).
 - `[DisassemblyDiagnoser]` was not added to any benchmark class: it would make every run, including CI, fail.
+
+## 9. `switch` consumption (F)
+
+New benchmarks: `Switching/SwitchingValueResultBenchmarks` and `Switching/SwitchingVoidResultBenchmarks` (`Success` true and false, all eight variants, baseline `UnionCustom_Switch`). The two unions consume the result with a `switch` expression (`FakeModel value => value.Id`, `ImmutableArray<Error> errors => errors.Length`, `null => ...`); the other variants use the equivalent `TryGetValue` chain, because they have no `Match` and no pattern support. No source file of any variant changed.
+
+Local smoke run (`--job short --inProcess`, Ryzen 5 3600X, Windows 11, .NET 11.0.0; net11 moniker not recognised, one short run, so the `Error` column is large and only the allocation result is solid):
+
+| Result | Success | UnionCustom | Struct | Union (declared) | Allocated |
+|---|---|---:|---:|---:|---|
+| value | true | 0.90 ns | 0.58 ns | 2.69 ns | 0 B for all |
+| value | false | 3.55 ns | 2.64 ns | 1.01 ns | 0 B for all |
+| void | true | 5.28 ns | 4.08 ns | 1.34 ns | 0 B for all |
+| void | false | 2.82 ns | 2.47 ns | 1.30 ns | 0 B for all |
+
+Findings:
+
+1. **No boxing leaks into consumption.** `UnionCustom_Switch` allocates 0 B in every case. The Tier1 disassembly (`DOTNET_JitDisasm`, see section 8) shows why: the compiler lowers the `switch` onto `TryGetValue(out T)` and `HasValue`, not onto `object? Value`. The only `CORINFO_HELP_NEWSFAST` (a box of the union itself) sits on the `ThrowSwitchExpressionException` path, which is unreachable once every case is covered. The boxing risk in 4.4 is therefore real only for a consumer that reads `Value` directly.
+2. **The declared `Union` does not allocate either on consumption**: its boxes were paid at creation (24 B for the error case). Consumption is a type check, so a success is slower (type check plus unbox, 2.7 ns vs 0.9 ns) and a failure is faster (1.0 ns vs 3.6 ns) than `UnionCustom`.
+3. **`UnionCustom` is a little slower than the structs** (about 1 ns on value success, 0.9 ns on value failure, 1.2 ns on void success), but inside the run-to-run noise of a short job; below the significance rule. A repeat run after a cosmetic refactor of the benchmark code reversed one row (void, success: `Struct` 6.3 ns vs `UnionCustom` 3.7 ns), so treat every ns gap here as unproven; only the 0 B allocation result held in both runs. In the disassembly, `TryGetValue(out T)` and `HasValue` are real calls (not inlined) in the `switch`, which is the likely reason, and it is the only thing that could still be improved.
+4. Not covered: `Match`. No variant has it, so adding it would be an API change for all variants and is left as planned work.
