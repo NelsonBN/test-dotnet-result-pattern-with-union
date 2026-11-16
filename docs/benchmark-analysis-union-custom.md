@@ -4,6 +4,39 @@ Source: [GitHub Actions run 43772005995](https://github.com/NelsonBN/test-dotnet
 
 Question: where is `ResultUnionCustom` (the `UnionCustom_*` baseline, Ratio 1.00) slower than the other variants, why, and what could be improved?
 
+## Status checklist
+
+Result of change A (PR #3): see [benchmark-analysis-union-custom-after-change-a.md](benchmark-analysis-union-custom-after-change-a.md) (CI run 43782547343, ratios are `UnionCustom / Struct` within the same run).
+
+**Worst cases (section 3)**
+
+- [x] 3.1 `new(ImmutableArray)` 25x gap: fixed (0.99x in CI)
+- [x] 3.2 `From(Error)` / implicit `Error` gap (1.5-1.9x): fixed (0.91-1.03x)
+- [x] 3.3 `Error[]` / `List<Error>` / `ReadOnlySpan<Error>` factories (1.2-1.3x): fixed (0.91-1.09x)
+- [x] 3.4 `HashSet` / lazy `IEnumerable` (below the significance rule): now level (1.03-1.07x)
+- [x] Allocations unchanged (equal to the struct variants)
+
+**Implementation issues (section 4)**
+
+- [x] 4.1 Constructor `IsDefault` normalization: replaced by a plain store plus an `_isError` flag (value struct stays 24 B, void struct 8 B to 16 B); mechanism confirmed by the results, disassembly not done yet
+- [x] 4.3 Double checks on read: the empty fallback now lives only on the read side (`Errors`, `TryGetValue`, `Value`); below the significance rule, no further action
+- [x] 4.5 Void `IsSuccess`: reviewed, no change needed (now `!_isError`)
+- [ ] 4.2 Null check in `Result<T>(T)`: reviewed, intentionally left (cheap, no measurable impact)
+- [ ] 4.4 `object? Value` boxing risk: not measured, needs the Match/`switch` benchmark (F)
+
+**Improvements (section 5)**
+
+- [x] A Remove the constructor normalization: done as a plain store plus `_isError`; tests first (3 characterization tests), 61/61 tests pass, lint clean, 100% coverage on `Result.cs`
+- [x] Comments on `_isError` explaining why it must not be removed
+- [x] `AGENTS.md` deviation updated for the flag
+- [x] Second report with CI before/after numbers
+- [ ] B Lazy / branch-free alternative: not needed, A solved it
+- [ ] C `AggressiveInlining`: not needed unless disassembly shows missing inlining
+- [ ] D Collapse the double checks: below the significance rule, skipped
+- [ ] E `[DisassemblyDiagnoser]` and a `--job medium` run on a dedicated machine: open
+- [ ] F Match/`switch` benchmark for the `Value` boxing risk: open (must be added to every variant)
+- [ ] Commit the pending docs and `AGENTS.md` changes: waiting for approval
+
 ## 1. Setup and caveats
 
 | Item | Value |
@@ -75,7 +108,7 @@ A steady 2.5-7 ns (about 20-35%) behind the structs. It matches the constant fro
 
 ### 3.5 Not a weakness
 
-On creation `UnionCustom` is faster than `Class` and `RecordClass` everywhere, and faster than or level with the declared `Union` (for example `From(Error)` value: 11.3 ns vs 12.9, 13.7 and 11.1 ns; void: 9.3 ns vs 14.1, 14.4 and 13.3 ns). On reading it is the fastest or tied in `Errors` and `TryGetValue(out ImmutableArray)`.
+On creation `UnionCustom` is faster than `Class` and `RecordClass` everywhere, and faster than or level with the declared `Union` (for example `From(Error)` value: 11.3 ns vs 12.9, 13.7 and 11.1 ns; void: 9.3 ns vs 14.1, 14.4 and 13.3 ns). On reading it is level with the structs (the near-0 ns rows for `Errors` and `TryGetValue(out ImmutableArray)` in this run were JIT-elided work, not a real advantage; see the second report).
 
 ## 4. Implementation issues from a performance perspective
 
@@ -114,7 +147,7 @@ Local before/after, `--job short --inProcess`, Release, Windows 11, .NET 11, sin
 | `From(Error)`, void | 6.39 ns | 5.48 ns | 5.21 ns |
 | `Error[]`, value | 20.83 ns | 15.02 ns | 13.87 ns |
 
-Allocations are unchanged. The implicit-`Error` rows (7.9 and 9.0 ns after) did not show the same improvement in this run; with the `From(Error)` rows moving as expected this looks like short-job noise, but it should be re-checked in a longer run (`--job medium`) before drawing conclusions. The CI numbers in sections 3 and 4 are from before this change.
+Allocations are unchanged. The implicit-`Error` rows (7.9 and 9.0 ns) did not move in this local short run, which was noise: the CI run shows them level with `Struct` (1.03x value, 0.91x void). The CI numbers in sections 3 and 4 are from before this change.
 
 ### Other candidates (not applied)
 
