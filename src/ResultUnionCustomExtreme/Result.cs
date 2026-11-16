@@ -12,6 +12,7 @@ public readonly struct Result<T> : IUnion
     private readonly T? _value;
     private readonly ImmutableArray<Error> _errors;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Result(T value)
     {
         if(value is null)
@@ -23,6 +24,7 @@ public readonly struct Result<T> : IUnion
         IsSuccess = true;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Result(ImmutableArray<Error> errors)
         => _errors = errors.IsDefault ? [] : errors;
 
@@ -54,27 +56,37 @@ public readonly struct Result<T> : IUnion
         ? throw new InvalidOperationException("Errors can be retrieved only when the result is an error")
         : _errors.IsDefault ? [] : _errors;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result<T> From(Error error) => new([error]);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result<T> From(Error[] errors) => new([.. errors]);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result<T> From(List<Error> errors) => new([.. CollectionsMarshal.AsSpan(errors)]);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result<T> From(IEnumerable<Error> errors) => new(ErrorCollection.Create(errors));
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result<T> From(params ReadOnlySpan<Error> errors) => new([.. errors]);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Result<T>(Error error) => From(error);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Result<T>(Error[] errors) => From(errors);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Result<T>(List<Error> errors) => From(errors);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Result<T>(ReadOnlySpan<Error> errors) => From(errors);
 }
 
 // Hand-written union: real fields plus HasValue/TryGetValue, so no case is boxed. default is a success.
 [Union]
+[method: MethodImpl(MethodImplOptions.AggressiveInlining)]
 public readonly struct Result(ImmutableArray<Error> errors) : IUnion
 {
     // default(ImmutableArray) means "no errors set", so default(Result) is a success.
@@ -96,21 +108,30 @@ public readonly struct Result(ImmutableArray<Error> errors) : IUnion
         ? throw new InvalidOperationException("Errors can be retrieved only when the result is an error")
         : _errors;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result From(Error error) => new([error]);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result From(Error[] errors) => new([.. errors]);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result From(List<Error> errors) => new([.. CollectionsMarshal.AsSpan(errors)]);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result From(IEnumerable<Error> errors) => new(ErrorCollection.Create(errors));
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result From(params ReadOnlySpan<Error> errors) => new([.. errors]);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Result(Error error) => From(error);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Result(Error[] errors) => From(errors);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Result(List<Error> errors) => From(errors);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Result(ReadOnlySpan<Error> errors) => From(errors);
 }
