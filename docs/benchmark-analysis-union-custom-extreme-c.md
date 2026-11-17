@@ -97,5 +97,5 @@ The earlier local run (Ryzen 5 3600X, Windows 11, `--job short --inProcess`) sho
 - Change C **helps** and costs nothing in allocations; keep it in `ResultUnionCustomExtreme`.
 - It does not explain everything: `new(ImmutableArray)` normalization (changes A/B) is still in the constructor, so the remaining creation gap to the structs has not been tested yet.
 - Reads and checks are untouched and flat; D (collapsing the double checks) is still below the significance rule.
-- Next: A or B, then E (`[DisassemblyDiagnoser]`) to confirm the inlining on the actual disassembly instead of inferring it from timings.
+- E is done (section 8 of the first report): the Tier1 disassembly shows `UnionCustom` already inlines `From(...)` and the constructor, so C changes no instruction at Tier1; the timing gain above is not explained by inlining.
 - Re-run the regression candidate (4) on a dedicated machine, and repeat the whole set with `--job medium` before publishing any number.

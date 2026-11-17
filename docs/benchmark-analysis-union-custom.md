@@ -23,11 +23,11 @@ Legend: [x] = done or closed with a decision; [ ] = still open.
 
 **Implementation issues (section 4)**
 
-- [x] 4.1 Constructor `IsDefault` normalization: replaced by a plain store plus an `_isError` flag (value struct stays 24 B, void struct 8 B to 16 B); mechanism confirmed by the results, disassembly not done yet
+- [x] 4.1 Constructor `IsDefault` normalization: replaced by a plain store plus an `_isError` flag (value struct stays 24 B, void struct 8 B to 16 B); mechanism confirmed by the results and by the JIT disassembly (E, section 8)
 - [x] 4.3 Double checks on read: the empty fallback now lives only on the read side (`Errors`, `TryGetValue`, `Value`); below the significance rule, no further action
 - [x] 4.5 Void `IsSuccess`: reviewed, no change needed (now `!_isError`)
 - [x] 4.2 Null check in `Result<T>(T)`: reviewed, closed as no action (cheap, no measurable impact, keeps documented semantics)
-- [ ] 4.4 `object? Value` boxing risk: not measured, needs the Match/`switch` benchmark (F)
+- [x] 4.4 `object? Value` boxing risk: measured with the `switch` benchmark (F): no allocation on the consumption path (section 9); a `Match` helper is still not benchmarked
 
 **Improvements (section 5)**
 
@@ -38,8 +38,8 @@ Legend: [x] = done or closed with a decision; [ ] = still open.
 - [x] B Lazy / branch-free alternative: closed, superseded by A (A reached the same goal and kept the observable behaviour)
 - [x] C `AggressiveInlining` on constructors, `From(...)` and implicit operators: **applied to `ResultUnionCustomExtreme` only** (baseline `ResultUnionCustom` untouched); CI: 15 of 40 comparisons improved (-1.4 to -7.5 ns), 24 level, 1 probable-noise regression (`CreatingErrorsFromListVoidResult`), allocations identical; deliberately not applied to `ResultUnionCustom`, which stays the baseline
 - [x] D Collapse the double checks: closed, below the significance rule (sub-ns after A), skipped
-- [ ] E `[DisassemblyDiagnoser]` and a `--job medium` run on a dedicated machine: open
-- [ ] F Match/`switch` benchmark for the `Value` boxing risk: open (must be added to every variant)
+- [x] E Disassembly: done with `DOTNET_JitDisasm` (BDN `--disasm` does not work with `--inProcess` on net11); constructor confirmed a plain store, and `AggressiveInlining` (C) turned out to change nothing at Tier1 (section 8). The `--job medium` run on a dedicated machine is still not done
+- [x] F `switch` benchmark for the `Value` boxing risk: done (`Switching/`, every variant, value and void); `Match` is still planned (no variant has it)
 - [ ] Commit the pending docs and `AGENTS.md` changes: waiting for approval
 
 ## 1. Setup and caveats
@@ -123,7 +123,7 @@ All in `src/ResultUnionCustom/Result.cs`.
    - The other five variants assign the field with no validation (AGENTS.md: "no validation").
    - It adds a branch and a static read of `ImmutableArray<Error>.Empty` on every creation path, and it is the only structural difference between this constructor and the struct constructors.
    - Evidence: the constant 3.4-3.65 ns in 3.1 reappears as the gap in 3.2 and 3.3.
-   - Status: **solved by change A** (plain store plus `_isError` flag; CI shows the gap closed). The mechanism is inferred from timings, not yet from disassembly (E still open).
+   - Status: **solved by change A** (plain store plus `_isError` flag; CI shows the gap closed). The mechanism is confirmed by the Tier1 disassembly (section 8).
 2. **Status: closed, no action.** **Null check in `Result<T>(T value)`** (`if(value is null) { return; }`): cheap and below the rule, but it is a branch the other variants lack and it changes semantics (a null success is read as failure). It does not show in the success benchmarks (0.04 ns), so no action for performance.
 3. **Status: closed, below the rule** (after A the empty fallback lives on the read side; sub-ns, see the after-change-A report, section 4). **Double checks on the way out**:
    - `Errors` (value): `IsSuccess` then `_errors.IsDefault`.
@@ -162,12 +162,12 @@ Allocations are unchanged. The implicit-`Error` rows (7.9 and 9.0 ns) did not mo
 | B | Keep normalization but make it branch-free or lazy (store as is, normalize in `Errors`). | Same as A without changing observable behaviour of `Errors`. | `TryGetValue` must normalize too. | **Closed**, superseded by A |
 | C | Add `[MethodImpl(MethodImplOptions.AggressiveInlining)]` to the constructors and `From(...)` if disassembly shows they are not inlined. | Removes call overhead on creation paths. | Only if A/B do not already fix it. | **Done** in `ResultUnionCustomExtreme` only ([report](benchmark-analysis-union-custom-extreme-c.md)) |
 | D | Collapse the double checks in `Errors` and `TryGetValue(out ImmutableArray)`. | Sub-ns; only worth it if A is done. | Below the significance rule. | **Closed**, below the rule |
-| E | Add `[DisassemblyDiagnoser]` to one creation class and re-run on a dedicated machine (`--job medium`, no CI noise). | Turns the hypothesis into evidence; confirms the 25x is not a measurement artefact. | None. | **Open** |
-| F | Add the planned Match/`switch` benchmark for `UnionCustom`. | Verifies whether `Value` boxing leaks into consumption. | New benchmark class for every variant (AGENTS.md: change all or none). | **Open** |
+| E | Add `[DisassemblyDiagnoser]` to one creation class and re-run on a dedicated machine (`--job medium`, no CI noise). | Turns the hypothesis into evidence; confirms the 25x is not a measurement artefact. | None. | **Done**, see section 8 (done with `DOTNET_JitDisasm`, not `[DisassemblyDiagnoser]`) |
+| F | Add the planned Match/`switch` benchmark for `UnionCustom`. | Verifies whether `Value` boxing leaks into consumption. | New benchmark class for every variant (AGENTS.md: change all or none). | **Done** for `switch`, see section 9; `Match` not written |
 
 **C applied to `ResultUnionCustomExtreme` only** (`AggressiveInlining` on constructors, `From(...)` and implicit operators; `ResultUnionCustom` untouched as baseline). Local smoke run (Ryzen 5 3600X, Windows 11, `--job short --inProcess`, net11 moniker not recognised, so indicative only): `new(ImmutableArray)` 0.80 ns (value) and about 0 ns (void, work eliminated) vs 2.8 ns baseline; `From(Error)` 5.5 ns vs 9.4 ns (value) and 3.9 ns vs 6.5 ns (void); allocations unchanged (32 B). So the call overhead was a large part of the creation gap. A, B, D, E, F still open.
 
-Remaining order: E first (cheap, confirms the mechanism and the inlining by disassembly), then F, and only then reconsider D. A and C are done, B is closed.
+Remaining order: a `--job medium` run on a dedicated machine, then reconsider D. A, C, E and F are done, B is closed.
 
 ## 6. Constraints for any follow-up
 
@@ -178,3 +178,47 @@ Remaining order: E first (cheap, confirms the mechanism and the inlining by disa
 ## 7. Raw numbers
 
 Per-scenario tables are in the run's artifacts (`BenchmarkResults-<Class>`, `benchmark-report-<Class>.md`). Figures above were copied from those tables without rounding beyond two decimals.
+
+## 8. Disassembly evidence (E)
+
+Method: `[DisassemblyDiagnoser]` / `--disasm` cannot be used here. With `--inProcess` on net11 every benchmark fails ("No benchmarks were disassembled", 0 benchmarks executed), and without `--inProcess` BenchmarkDotNet 0.15.8 does not recognise the net11 moniker. The runtime's own JIT dump works with no change to the code:
+
+```powershell
+$env:DOTNET_JitStdOutFile = "<path>\jit.txt"
+$env:DOTNET_JitDisasm = "*_CreateError *Result*:From *Result*:.ctor"
+dotnet run -c Release --project tests/Result.Benchmarks -- --filter "*CreatingErrorValueResultBenchmarks*" --job short --inProcess
+```
+
+Read the `(Tier1)` listings only (Tier0 and instrumented Tier0 are also dumped). Local run: Ryzen 5 3600X, Windows 11, .NET 11.0.0, x86-64-v3; indicative only.
+
+Findings (value results):
+
+1. **Change A confirmed.** `Result<T>(ImmutableArray<Error>)` is a plain store in `UnionCustom`: zero the value field, set the flag, store the array. There is no `IsDefault` test and no read of `ImmutableArray<Error>.Empty`. In `CreatingErrorsFromImmutableArray*`, the benchmark method is the same 6 instructions for `Struct`, `ReadonlyStruct`, `RecordStruct`, `UnionCustom` and `UnionCustomExtreme` (the constructor is inlined). The only difference is one store: `mov word ptr [..+8], 1` (`IsSuccess` + `_isError` written together) instead of `mov byte ptr [..+8], 0`. The old 25x gap is gone for that reason.
+2. **Change C has no effect at Tier1.** In `UnionCustom` the JIT already inlines `From(Error)` and the constructor into the benchmark method, and the `From` body is instruction for instruction the same as in `UnionCustomExtreme` (only the method-table constant differs). `AggressiveInlining` therefore adds nothing in steady state. The CI gain reported in `benchmark-analysis-union-custom-extreme-c.md` is not explained by inlining at Tier1; likely noise, or tiering effects before Tier1 is reached. In the local run here `UnionCustomExtreme_CreateError` was even slower (8.8 ns vs 5.8 ns, ratio 1.53, `Error` 9.5 ns), which shows how noisy a short run is.
+3. **`From(Error)` costs the same as `Struct`.** Same allocation of the 1-element array (`CORINFO_HELP_NEWARR_1_PTR`) and the same two write barriers; the union differs only in the flag store.
+
+Consequences:
+
+- Do not apply C to `ResultUnionCustom` and do not spend more time on inlining attributes: the JIT already does it.
+- The earlier claim that C "removes call overhead" (section 5) is not supported by the disassembly; treat the CI numbers as noise until a `--job medium` run on a dedicated machine says otherwise (still open).
+- `[DisassemblyDiagnoser]` was not added to any benchmark class: it would make every run, including CI, fail.
+
+## 9. `switch` consumption (F)
+
+New benchmarks: `Switching/SwitchingValueResultBenchmarks` and `Switching/SwitchingVoidResultBenchmarks` (`Success` true and false, all eight variants, baseline `UnionCustom_Switch`). The two unions consume the result with a `switch` expression (`FakeModel value => value.Id`, `ImmutableArray<Error> errors => errors.Length`, `null => ...`); the other variants use the equivalent `TryGetValue` chain, because they have no `Match` and no pattern support. No source file of any variant changed.
+
+Local smoke run (`--job short --inProcess`, Ryzen 5 3600X, Windows 11, .NET 11.0.0; net11 moniker not recognised, one short run, so the `Error` column is large and only the allocation result is solid):
+
+| Result | Success | UnionCustom | Struct | Union (declared) | Allocated |
+|---|---|---:|---:|---:|---|
+| value | true | 0.90 ns | 0.58 ns | 2.69 ns | 0 B for all |
+| value | false | 3.55 ns | 2.64 ns | 1.01 ns | 0 B for all |
+| void | true | 5.28 ns | 4.08 ns | 1.34 ns | 0 B for all |
+| void | false | 2.82 ns | 2.47 ns | 1.30 ns | 0 B for all |
+
+Findings:
+
+1. **No boxing leaks into consumption.** `UnionCustom_Switch` allocates 0 B in every case. The Tier1 disassembly (`DOTNET_JitDisasm`, see section 8) shows why: the compiler lowers the `switch` onto `TryGetValue(out T)` and `HasValue`, not onto `object? Value`. The only `CORINFO_HELP_NEWSFAST` (a box of the union itself) sits on the `ThrowSwitchExpressionException` path, which is unreachable once every case is covered. The boxing risk in 4.4 is therefore real only for a consumer that reads `Value` directly.
+2. **The declared `Union` does not allocate either on consumption**: its boxes were paid at creation (24 B for the error case). Consumption is a type check, so a success is slower (type check plus unbox, 2.7 ns vs 0.9 ns) and a failure is faster (1.0 ns vs 3.6 ns) than `UnionCustom`.
+3. **`UnionCustom` is a little slower than the structs** (about 1 ns on value success, 0.9 ns on value failure, 1.2 ns on void success), but inside the run-to-run noise of a short job; below the significance rule. A repeat run after a cosmetic refactor of the benchmark code reversed one row (void, success: `Struct` 6.3 ns vs `UnionCustom` 3.7 ns), so treat every ns gap here as unproven; only the 0 B allocation result held in both runs. In the disassembly, `TryGetValue(out T)` and `HasValue` are real calls (not inlined) in the `switch`, which is the likely reason, and it is the only thing that could still be improved.
+4. Not covered: `Match`. No variant has it, so adding it would be an API change for all variants and is left as planned work.
